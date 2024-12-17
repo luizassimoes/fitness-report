@@ -1,0 +1,7 @@
+numpy
+pandas
+seaborn
+streamlit
+matplotlib
+intervaltree
+openpyxl
