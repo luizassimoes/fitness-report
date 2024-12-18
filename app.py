@@ -152,10 +152,10 @@ def insert_table(sheet, table, dark, light):
     return sheet
 
 
-st.set_page_config(page_title="Fitness Report", page_icon="💪")
-st.title("🏋️ Fitness Report")
+st.set_page_config(page_title="Fitness Wrapped", page_icon="💪")
+st.title("🏋️ Fitness Wrapped")
 
-st.write("Here is how you can use this app:   (if you already know it, just [skip to importer](#importer))")
+st.write("Here is how you can use this app:   (if you already know it, just [skip to the importer](#importer))")
 st.write("1. On your iPhone, open the Health app.")
 st.write("2. Tap your profile picture (or initials) in the top right corner.")
 st.write("3. Scroll down the page and click 'Export All Health Data'")
@@ -176,6 +176,7 @@ default_year  = this_year if this_month == 12 else this_year - 1
 default_index = year_range.index(default_year)
 selected_year = st.selectbox("Choose a year:", year_range, index=default_index)
 
+my_file = st.file_uploader("Select a file", type=["xml"], label_visibility="hidden")
 
 if my_file is not None:
     st.write("Importing Fitness data...")
