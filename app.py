@@ -363,56 +363,59 @@ if my_file is not None:
     # Showing all of the results:
 
     
+    row_year_1 = f'You exercised for {tsd(exercise_total_time)} minutes this year in {exercise_total_days} different days and burned {tsd(exercise_total_calories)} calories!'
+    row_year_2 = f'That is an average of {exercise_time_per_day} minutes and {exercise_calories_per_day} calories per day.'
+
     row_mileage_1   = f'You covered a lot of kilometers this year... {total_kms}!'
     row_mileage_2   = 'Check it out how you did it:'
     table_mileage_1 = kms.copy()
     table_mileage_1.columns = ['Sport', 'Total Minutes', 'Total kms', 'Sessions']
 
-    row_sports_1 = (f'And you experimented {total_sports} different sports!')
-    row_sports_2 = (f'Your top sport by number of registers is: {top_sport_by_count} and you practiced it {count_top_sport} times this year.')
+    row_sports_1 = f'And you experimented {total_sports} different sports!'
+    row_sports_2 = f'Your top sport by number of registers is: {top_sport_by_count} and you practiced it {count_top_sport} times this year.'
 
     if top_sport_by_count != top_sport_by_time:
-        row_sports_3 = (f'But your top sport by time is: {top_sport_by_time} and you practiced it {count_top_sport_by_time} times this year for {tsd(time_top_sport)} minutes.')
+        row_sports_3 = f'But your top sport by time is: {top_sport_by_time} and you practiced it {count_top_sport_by_time} times this year for {tsd(time_top_sport)} minutes.'
     else:
-        row_sports_3 = (f'And your top sport by time is also: {top_sport_by_time}! You practiced it for {tsd(time_top_sport)} minutes.')
+        row_sports_3 = f'And your top sport by time is also: {top_sport_by_time}! You practiced it for {tsd(time_top_sport)} minutes.'
 
-    row_sports_4 = (f"You burned an average of {int(top_5_sports_by_time.loc[0, 'Total Calories']/count_top_sport_by_time)} calories per {top_sport_by_time} session.")
+    row_sports_4 = f"You burned an average of {int(top_5_sports_by_time.loc[0, 'Total Calories']/count_top_sport_by_time)} calories per {top_sport_by_time} session."
 
-    row_sports_5 = (f'Your top 5 sports are:')
+    row_sports_5 = f'Your top 5 sports are:'
     table_sports_1 = top_5_sports_by_time
 
     
-    row_heart_1 = (f'The sport that makes your heart race is: {sport_highest_avg_heart_rate}!')
-    row_heart_2 = (f'The average heart rate you get when practicing it is {highest_avg_heart_rate} bpm.')
+    row_heart_1 = f'The sport that makes your heart race is: {sport_highest_avg_heart_rate}!'
+    row_heart_2 = f'The average heart rate you get when practicing it is {highest_avg_heart_rate} bpm.'
 
     
-    row_calories_1 = (f'But the sport that really makes you burn is {sport_highest_avg_calories} with an average of {highest_avg_calories} calories per session!')
+    row_calories_1 = f'But the sport that really makes you burn is {sport_highest_avg_calories} with an average of {highest_avg_calories} calories per session!'
 
     
-    row_day_1 = (f'The day you exercised the most was {top_exercise_day.month_name()} {top_exercise_day.day}.')
-    row_day_2 = (f'You worked out for {top_exercise_day_time} minutes and burned {int(top_exercise_day_calories)} calories!')
+    row_day_1 = f'The day you exercised the most was {top_exercise_day.month_name()} {top_exercise_day.day}.'
+    row_day_2 = f'You worked out for {top_exercise_day_time} minutes and burned {int(top_exercise_day_calories)} calories!'
 
-    row_day_3 = (f'Exercises that day:')
+    row_day_3 = f'Exercises that day:'
     top_exercise_day_training = top_exercise_day_training.reset_index(drop=True)
     table_day_1 = top_exercise_day_training[['Sport', 'Total Minutes', 'Total Calories']]
 
     
-    row_day_4 = (f'Now, your most active day was... {top_active_day.month_name()} {top_active_day.day}!')
-    row_day_5 = (f'Your movement ring reached {tsd(int(top_active_day_calories))} calories and your exercise ring registered {top_active_day_time} minutes!')
+    row_day_4 = f'Now, your most active day was... {top_active_day.month_name()} {top_active_day.day}!'
+    row_day_5 = f'Your movement ring reached {tsd(int(top_active_day_calories))} calories and your exercise ring registered {top_active_day_time} minutes!'
 
     if top_active_day_training.empty:
         row_day_6 = 'However, there are no exercises registered for this day...'
         table_day_2 = ''
     else:
         top_active_day_training = top_active_day_training.reset_index(drop=True)
-        row_day_6 = (f"Exercises that day: ")
+        row_day_6 = f"Exercises that day: "
         table_day_2 = top_active_day_training[['Sport', 'Total Minutes', 'Total Calories']]
 
     
-    row_goals_1 = (f'You reached your movement goal on {days_energy_goal_check} days this year!')
-    row_goals_2 = (f'That represents {percent_goal_check_so_far}% of the year!')
+    row_goals_1 = f'You reached your movement goal on {days_energy_goal_check} days this year!'
+    row_goals_2 = f'That represents {percent_goal_check_so_far}% of the year!'
 
-    row_view_1 = (f'Below you can see your results throughout the year.')
+    row_view_1 = f'Below you can see your results throughout the year.'
 
     
     df_activity_per_month = df_activity.groupby(['month', 'month_name']).agg({'appleExerciseTime': 'sum'}).reset_index()
@@ -469,7 +472,7 @@ if my_file is not None:
     ax1.set_xticks(range(len(labels)))  # Definindo o número de ticks com base no número de rótulos
     ax1.set_xticklabels(labels, rotation=0, fontdict={'fontsize': 10});  
     ax1.set_xlabel('');
-    ax1.set_title('Your Workout Distribution')
+    ax1.set_title('Your Workout Distribution', fontdict={'fontsize': 16})
 
     y_max = df_v2_sport_time['duration'].max()
     ax1.set_ylim(0, y_max * 1.08)
@@ -483,7 +486,7 @@ if my_file is not None:
     plt.savefig(img_buffer_2, format='png', dpi=100)
 
     
-    # Gerando o relatório:    
+    # Gerando o relatório:
     wb = Workbook()
     sheet = wb.active
 
@@ -538,8 +541,8 @@ if my_file is not None:
     sheet.cell(row=curr_row+1, column=2).value   = row_sports_2
     sheet.cell(row=curr_row+2, column=2).value   = row_sports_3
     sheet.cell(row=curr_row+3, column=2).value   = row_sports_4
-    sheet.cell(row=curr_row+4, column=2).value   = row_sports_5
-    sheet.cell(row=curr_row+4, column=2).font    = Font(bold=True)
+    sheet.cell(row=curr_row+5, column=2).value   = row_sports_5
+    sheet.cell(row=curr_row+5, column=2).font    = Font(bold=True)
     sheet = insert_table(sheet, table_sports_1, dark_orange, light_orange)
 
     # Heart
@@ -568,6 +571,7 @@ if my_file is not None:
     sheet.cell(row=curr_row, column=2).value     = row_day_1
     sheet.cell(row=curr_row+1, column=2).value   = row_day_2
     sheet.cell(row=curr_row+3, column=2).value   = row_day_3
+    sheet.cell(row=curr_row+3, column=2).font    = Font(bold=True)
     sheet = insert_table(sheet, table_day_1, dark_blue, light_blue)
 
     curr_row = sheet.max_row + 3
