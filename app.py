@@ -82,11 +82,21 @@ def parse_large_xml(file, tag, attribute=None, values=[]):
     file.seek(0)
     for event, elem in ET.iterparse(file, events=('end',)):
         if elem.tag == tag:
-            if attribute and attribute in elem.attrib:
-                if elem.attrib[attribute] in values:
-                    rows.append(elem.attrib)  # Extrai os atributos como dicionário
+
+            data = elem.attrib
+
+            if tag == 'Workout':
+                distance_km = None  
+                for child in elem:
+                    if child.tag == 'WorkoutStatistics' and 'Distance' in child.attrib.get('type', ''):
+                        distance_km = child.attrib.get('sum')  # Pega a distância (sum)
+                data['distance_km'] = distance_km
+
+            if attribute and attribute in data:
+                if data[attribute] in values:
+                    rows.append(data)  # Extrai os atributos como dicionário
             elif not attribute:
-                rows.append(elem.attrib)  # Extrai os atributos como dicionário
+                rows.append(data)  # Extrai os atributos como dicionário
             elem.clear()
     return pd.DataFrame(rows)
 
@@ -246,7 +256,16 @@ if file_path is not None:
     df_v2['calories'] = df_v2['calories'].astype(int)
     
     # Results:
-    st.write("Calculating your results...")
+
+    # Distance:
+    df_workout['distance_km'] = df_workout['distance_km'].astype(float).round(2)
+    kms = df_workout[~df_workout['distance_km'].isna()].groupby('workoutActivityType').agg({'duration': 'sum', 'distance_km': 'sum', 'id': 'count'}).reset_index()
+    kms = kms.sort_values('distance_km', ascending=False)
+
+    total_kms = kms['distance_km'].sum()
+    total_kms = int(total_kms)
+
+
     # Top sports:
     sports_by_count    = df_v2['workoutActivityType'].value_counts()
     total_sports       = len(sports_by_count)
@@ -331,8 +350,10 @@ if file_path is not None:
     # Showing all of the results:
 
     
-    row_year_1 = (f'You exercised for {tsd(exercise_total_time)} minutes this year in {exercise_total_days} different days and burned {tsd(exercise_total_calories)} calories!')
-    row_year_2 = (f'That is an average of {exercise_time_per_day} minutes and {exercise_calories_per_day} calories per day.')
+    row_mileage_1   = f'You covered a lot of kilometers this year... {total_kms}!'
+    row_mileage_2   = 'Check it out how you did it:'
+    table_mileage_1 = kms.copy()
+    table_mileage_1.columns = ['Sport', 'Total Minutes', 'Total kms', 'Sessions']
 
     row_sports_1 = (f'And you experimented {total_sports} different sports!')
     row_sports_2 = (f'Your top sport by number of registers is: {top_sport_by_count} and you practiced it {count_top_sport} times this year.')
@@ -482,6 +503,17 @@ if file_path is not None:
     sheet.cell(row=5, column=1).alignment = center_alignment
     sheet.cell(row=5, column=2).value     = row_year_1
     sheet.cell(row=6, column=2).value     = row_year_2
+
+    # Mileage
+    curr_row = sheet.max_row + 2
+
+    sheet.cell(row=curr_row, column=1).value     = 'Mileage'
+    sheet.cell(row=curr_row, column=1).fill      = PatternFill(start_color='4EB6B1', fill_type='solid')
+    sheet.cell(row=curr_row, column=1).alignment = center_alignment
+    sheet.cell(row=curr_row, column=2).value     = row_mileage_1
+    sheet.cell(row=curr_row+2, column=2).value   = row_mileage_2
+    sheet.cell(row=curr_row+2, column=2).font    = Font(bold=True)
+    sheet = insert_table(sheet, table_mileage_1, '4EB6B1', 'DEF2F2')
 
     # Sports
     curr_row = sheet.max_row + 2
