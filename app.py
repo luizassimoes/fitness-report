@@ -167,21 +167,31 @@ st.write("8. Upload the file below and enjoy exploring how your year went!")
 
 
 st.markdown('<div id="importer"></div>', unsafe_allow_html=True)
-my_file = st.file_uploader("", type=["xml"])
+today = date.today()
+this_year  = today.year
+this_month = today.month
+
+year_range    = list(range(this_year, 2000, -1))
+default_year  = this_year if this_month == 12 else this_year - 1
+default_index = year_range.index(default_year)
+selected_year = st.selectbox("Choose a year:", year_range, index=default_index)
+
 
 if my_file is not None:
-    att_list = ['HKQuantityTypeIdentifierHeartRate', 'HKQuantityTypeIdentifierActiveEnergyBurned'] 
-    st.write("Importing Health data...")
-    df_heart_cal = parse_large_xml(my_file, tag='Record', attribute='type', values=att_list)
-    df_heart_cal = df_heart_cal.drop(['sourceName', 'sourceVersion', 'device', 'unit', 'creationDate', 'endDate'], axis=1)
-
     st.write("Importing Fitness data...")
     df_workout = parse_large_xml(my_file, tag='Workout')
     df_workout = df_workout.drop(columns=['durationUnit', 'sourceName', 'sourceVersion'], axis=1)
+    df_workout = df_workout[df_workout['startDate'].str.startswith(f"{selected_year}")].reset_index(drop=True)
+    st.write("Importing Health data...")
+    att_list = ['HKQuantityTypeIdentifierHeartRate', 'HKQuantityTypeIdentifierActiveEnergyBurned'] 
+    df_heart_cal = parse_large_xml(my_file, tag='Record', attribute='type', values=att_list)
+    df_heart_cal = df_heart_cal.drop(['sourceName', 'sourceVersion', 'device', 'unit', 'creationDate', 'endDate'], axis=1)
+    df_heart_cal = df_heart_cal[df_heart_cal['startDate'].str.startswith(f"{selected_year}")].reset_index(drop=True)
 
     st.write("Importing Activity data...")
     df_activity = parse_large_xml(my_file, tag='ActivitySummary')
     df_activity = df_activity[['dateComponents', 'activeEnergyBurned', 'activeEnergyBurnedGoal', 'appleExerciseTime']]
+    df_activity  = df_activity[df_activity['dateComponents'].str.startswith(f"{selected_year}")].reset_index(drop=True)
 
     # st.write("All data imported.")
     st.write("Calculating your results...")
@@ -196,19 +206,6 @@ if my_file is not None:
     df_activity['appleExerciseTime']  = df_activity['appleExerciseTime'].astype('Int64')
 
     df_activity['activeEnergyBurnedGoal'] = df_activity['activeEnergyBurnedGoal'].astype('Int64')
-
-    search_year = None
-    # search_year = 2021
-
-    today        = date.today()
-    this_month   = today.month
-
-    if not search_year:
-        search_year  = today.year if this_month == 12 else today.year - 1
-        
-    df_workout   = df_workout[df_workout['startDate'].str.startswith(f"{search_year}")].reset_index(drop=True)
-    df_heart_cal = df_heart_cal[df_heart_cal['startDate'].str.startswith(f"{search_year}")].reset_index(drop=True)
-    df_activity  = df_activity[df_activity['dateComponents'].str.startswith(f"{search_year}")].reset_index(drop=True)
     
     df_workout['workoutActivityType'] = df_workout['workoutActivityType'].str.split('ActivityType').where(df_workout['workoutActivityType'].notnull(), np.nan).str[1]
     df_workout['workoutActivityType'] = df_workout['workoutActivityType'].apply(spaced_str)
@@ -514,7 +511,7 @@ if my_file is not None:
     sheet.row_dimensions[4].height = 9
 
     # Year general info:
-    sheet.cell(row=5, column=1).value     = search_year
+    sheet.cell(row=5, column=1).value     = selected_year
     sheet.cell(row=5, column=1).fill      = PatternFill(start_color='B5E6A2', fill_type='solid')
     sheet.cell(row=5, column=1).alignment = center_alignment
     sheet.cell(row=5, column=2).value     = row_year_1
@@ -610,7 +607,7 @@ if my_file is not None:
     sheet.add_image(img_1, f'B{row_img1}')
     sheet.add_image(img_2, f'B{row_img1+16}')
 
-    excel_title = f"{search_year}_fitness_report.xlsx"
+    excel_title = f"{selected_year}_fitness_report.xlsx"
 
     
     # wb.save(excel_title)
