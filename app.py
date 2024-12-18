@@ -152,26 +152,39 @@ def insert_table(sheet, table, dark, light):
     return sheet
 
 
+st.set_page_config(page_title="Fitness Report", page_icon="💪")
+st.title("🏋️ Fitness Report")
 
-st.title("Fitness Report")
+st.write("Here is how you can use this app:   (if you already know it, just [skip to importer](#importer))")
+st.write("1. On your iPhone, open the Health app.")
+st.write("2. Tap your profile picture (or initials) in the top right corner.")
+st.write("3. Scroll down the page and click 'Export All Health Data'")
+st.write("4. Confirm and wait a little bit for the process to complete.")
+st.write("5. Once finished, locate the zip file and extract its contents.")
+st.write("6. Open the extracted folder and navigate to: apple_health_export > export.xml")
+st.write("7. That's the file we need: export.xml.")
+st.write("8. Upload the file below and enjoy exploring how your year went!")
 
-file_path = st.file_uploader("Please, select you file.", type=["xml"])
 
-if file_path is not None:
+st.markdown('<div id="importer"></div>', unsafe_allow_html=True)
+my_file = st.file_uploader("", type=["xml"])
+
+if my_file is not None:
     att_list = ['HKQuantityTypeIdentifierHeartRate', 'HKQuantityTypeIdentifierActiveEnergyBurned'] 
     st.write("Importing Health data...")
-    df_heart_cal = parse_large_xml(file_path, tag='Record', attribute='type', values=att_list)
+    df_heart_cal = parse_large_xml(my_file, tag='Record', attribute='type', values=att_list)
     df_heart_cal = df_heart_cal.drop(['sourceName', 'sourceVersion', 'device', 'unit', 'creationDate', 'endDate'], axis=1)
 
     st.write("Importing Fitness data...")
-    df_workout = parse_large_xml(file_path, tag='Workout')
+    df_workout = parse_large_xml(my_file, tag='Workout')
     df_workout = df_workout.drop(columns=['durationUnit', 'sourceName', 'sourceVersion'], axis=1)
 
     st.write("Importing Activity data...")
-    df_activity = parse_large_xml(file_path, tag='ActivitySummary')
+    df_activity = parse_large_xml(my_file, tag='ActivitySummary')
     df_activity = df_activity[['dateComponents', 'activeEnergyBurned', 'activeEnergyBurnedGoal', 'appleExerciseTime']]
 
-    st.write("All data imported.")
+    # st.write("All data imported.")
+    st.write("Calculating your results...")
 
     # Adjusting numeric values
     st.write()
@@ -600,12 +613,14 @@ if file_path is not None:
     output = BytesIO()
     wb.save(output)
 
-    # Botão para baixar o arquivo Excel
-    st.download_button(
-        label="Baixar Dados Processados em Excel",
-        data=output,
-        file_name=excel_title,
-        mime='application/xlsx' #"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+
+    col1, col2, col3 = st.columns(3)
+    with col2:
+        st.download_button(
+            label="Download my Fitness Report",
+            data=output,
+            file_name=excel_title,
+            mime='application/xlsx' #"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 else:
-    st.info("Por favor, envie um arquivo para começar.")
+    st.info("Please, submit a file to get started.")
