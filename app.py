@@ -182,6 +182,11 @@ if my_file is not None:
     df_workout = parse_large_xml(my_file, tag='Workout')
     df_workout = df_workout.drop(columns=['durationUnit', 'sourceName', 'sourceVersion'], axis=1)
     df_workout = df_workout[df_workout['startDate'].str.startswith(f"{selected_year}")].reset_index(drop=True)
+
+    if df_workout.empty:
+        st.error("Sorry, there are no Workout records for that year.")
+        st.stop()
+
     st.write("Importing Health data...")
     att_list = ['HKQuantityTypeIdentifierHeartRate', 'HKQuantityTypeIdentifierActiveEnergyBurned'] 
     df_heart_cal = parse_large_xml(my_file, tag='Record', attribute='type', values=att_list)
