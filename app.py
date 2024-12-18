@@ -180,9 +180,13 @@ my_file = st.file_uploader("Select a file", type=["xml"], label_visibility="hidd
 
 if my_file is not None:
     st.write("Importing Fitness data...")
-    df_workout = parse_large_xml(my_file, tag='Workout')
-    df_workout = df_workout.drop(columns=['durationUnit', 'sourceName', 'sourceVersion'], axis=1)
-    df_workout = df_workout[df_workout['startDate'].str.startswith(f"{selected_year}")].reset_index(drop=True)
+    try:
+        df_workout = parse_large_xml(my_file, tag='Workout')
+        df_workout = df_workout.drop(columns=['durationUnit', 'sourceName', 'sourceVersion'], axis=1)
+        df_workout = df_workout[df_workout['startDate'].str.startswith(f"{selected_year}")].reset_index(drop=True)
+    except:
+        st.error("Are you sure you uploaded the correct file? Something went wrong... please try again.")
+        st.stop()
 
     if df_workout.empty:
         st.error("Sorry, there are no Workout records for that year.")
@@ -276,6 +280,7 @@ if my_file is not None:
     # Distance:
     df_workout['distance_km'] = df_workout['distance_km'].astype(float).round(2)
     kms = df_workout[~df_workout['distance_km'].isna()].groupby('workoutActivityType').agg({'duration': 'sum', 'distance_km': 'sum', 'id': 'count'}).reset_index()
+    kms = kms[kms['distance_km'] > 0]
     kms = kms.sort_values('distance_km', ascending=False)
 
     total_kms = kms['distance_km'].sum()
