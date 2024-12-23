@@ -85,15 +85,13 @@ def parse_large_xml(file, tag, attribute=None, values=[]):
             data = elem.attrib
 
             if tag == 'Workout':
-                active_cal, basal_cal, distance_km = (0,) * 3
+                calories, distance_km = (0,) * 2
                 heart_rate_min, heart_rate_max, heart_rate_avg = (0,) * 3
 
                 for child in elem:
                     if child.tag == 'WorkoutStatistics':
                         if 'ActiveEnergyBurned' in child.attrib.get('type', ''):
-                            active_cal = child.attrib.get('sum')
-                        elif 'BasalEnergyBurned' in child.attrib.get('type', ''):
-                            basal_cal = child.attrib.get('sum')
+                            calories = child.attrib.get('sum')
                         elif 'HeartRate' in child.attrib.get('type', ''):
                             heart_rate_min = child.attrib.get('minimum')
                             heart_rate_max = child.attrib.get('maximum')
@@ -103,8 +101,7 @@ def parse_large_xml(file, tag, attribute=None, values=[]):
                             if data['workoutActivityType'].endswith(tuple(km_sports)):
                                 distance_km = child.attrib.get('sum')  # Pega a distância (sum)
 
-                calories = float(active_cal) + float(basal_cal)
-                data['calories'] = calories
+                data['calories'] = float(calories)
                 data['heart_rate_min'] = heart_rate_min
                 data['heart_rate_max'] = heart_rate_max
                 data['heart_rate_avg'] = heart_rate_avg
@@ -288,7 +285,7 @@ if my_file is not None:
     # Results:
 
     # Distance:
-    df_workout['distance_km'] = df_workout['distance_km'].astype(int)
+    df_workout['distance_km'] = df_workout['distance_km'].astype(float).astype(int)
     kms = df_workout[~df_workout['distance_km'].isna()].groupby('workoutActivityType').agg({'duration': 'sum', 'distance_km': 'sum', 'creationDate': 'count'}).reset_index()
     kms = kms[kms['distance_km'] != 0]
     kms = kms.sort_values('distance_km', ascending=False)
