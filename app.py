@@ -169,6 +169,8 @@ def insert_table(sheet, table, dark, light):
 
 st.set_page_config(page_title="Fitness Wrapped", page_icon="💪")
 st.title("🏋️ Fitness Wrapped")
+st.write("Developed by [Luiza Souza Simões](https://www.linkedin.com/in/luizassimoes/).")
+st.write(" ")
 
 st.write("Here is how you can use this app:   (if you already know it, just [skip to the importer](#importer))")
 st.write("1. On your iPhone, open the Health app.")
