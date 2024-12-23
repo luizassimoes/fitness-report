@@ -173,15 +173,13 @@ st.title("🏋️ Fitness Wrapped")
 st.write("Developed by [Luiza Souza Simões](https://www.linkedin.com/in/luizassimoes/).")
 st.write(" ")
 
-st.write("Here is how you can use this app:   (if you already know it, just [skip to the importer](#importer))")
-st.write("1. On your iPhone, open the Health app.")
+st.write("**Here is how you can use this app:**   _(if you already know it, just [skip to the importer](#importer))_")
+st.write("1. On your iPhone, open the **Health app**.")
 st.write("2. Tap your profile picture (or initials) in the top right corner.")
-st.write("3. Scroll down the page and click 'Export All Health Data'")
-st.write("4. Confirm and wait a little bit for the process to complete.")
-st.write("5. Once finished, locate the zip file and extract its contents.")
-st.write("6. Open the extracted folder and navigate to: apple_health_export > export.xml")
-st.write("7. That's the file we need: export.xml.")
-st.write("8. Upload the file below and enjoy exploring how your year went!")
+st.write("3. Scroll down and click **Export All Health Data**")
+st.write("4. Confirm and wait for the process to complete. It can take a minute.")
+st.write("5. Once finished, save the ZIP file to a folder using **Save to Files**.")
+st.write("6. Upload the file below and enjoy exploring how your year went!")
 
 
 st.markdown('<div id="importer"></div>', unsafe_allow_html=True)
@@ -197,7 +195,7 @@ selected_year = st.selectbox("Choose a year:", year_range, index=default_index)
 my_file = st.file_uploader("Select a file", type=["zip"], label_visibility="hidden")
 
 if my_file is not None:
-    
+
     with zipfile.ZipFile(my_file) as z:
         if 'apple_health_export/export.xml' in z.namelist():
             file_xml = z.open('apple_health_export/export.xml')
