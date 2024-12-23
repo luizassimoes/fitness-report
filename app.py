@@ -1,5 +1,6 @@
 
 import re
+import zipfile
 import textwrap
 import numpy as np
 import pandas as pd
@@ -64,7 +65,7 @@ def assign_workout_id(df, interval_tree):
     return df
 
 
-def parse_large_xml(file, tag, attribute=None, values=[]):
+def parse_large_xml(zip_path, tag, attribute=None, values=[]):
     """
     Lê um XML grande de forma eficiente, processando elementos específicos.
     
@@ -78,41 +79,44 @@ def parse_large_xml(file, tag, attribute=None, values=[]):
     - DataFrame contendo os dados extraídos.
     """
     rows = []
-    file.seek(0)
-    for event, elem in ET.iterparse(file, events=('end',)):
-        if elem.tag == tag:
+    with zipfile.ZipFile(zip_path) as z:
+        if 'apple_health_export/export.xml' in z.namelist():
+            with z.open('apple_health_export/export.xml') as file_xml:
+                file_xml.seek(0)
+                for event, elem in ET.iterparse(file_xml, events=('end',)):
+                    if elem.tag == tag:
 
-            data = elem.attrib
+                        data = elem.attrib
 
-            if tag == 'Workout':
-                calories, distance_km = (0,) * 2
-                heart_rate_min, heart_rate_max, heart_rate_avg = (0,) * 3
+                        if tag == 'Workout':
+                            calories, distance_km = (0,) * 2
+                            heart_rate_min, heart_rate_max, heart_rate_avg = (0,) * 3
 
-                for child in elem:
-                    if child.tag == 'WorkoutStatistics':
-                        if 'ActiveEnergyBurned' in child.attrib.get('type', ''):
-                            calories = child.attrib.get('sum')
-                        elif 'HeartRate' in child.attrib.get('type', ''):
-                            heart_rate_min = child.attrib.get('minimum')
-                            heart_rate_max = child.attrib.get('maximum')
-                            heart_rate_avg = child.attrib.get('average')
-                        elif 'Distance' in child.attrib.get('type', ''):
-                            km_sports = ['Running', 'Swimming', 'Cycling', 'Walking', 'Hiking']
-                            if data['workoutActivityType'].endswith(tuple(km_sports)):
-                                distance_km = child.attrib.get('sum')  # Pega a distância (sum)
+                            for child in elem:
+                                if child.tag == 'WorkoutStatistics':
+                                    if 'ActiveEnergyBurned' in child.attrib.get('type', ''):
+                                        calories = child.attrib.get('sum')
+                                    elif 'HeartRate' in child.attrib.get('type', ''):
+                                        heart_rate_min = child.attrib.get('minimum')
+                                        heart_rate_max = child.attrib.get('maximum')
+                                        heart_rate_avg = child.attrib.get('average')
+                                    elif 'Distance' in child.attrib.get('type', ''):
+                                        km_sports = ['Running', 'Swimming', 'Cycling', 'Walking', 'Hiking']
+                                        if data['workoutActivityType'].endswith(tuple(km_sports)):
+                                            distance_km = child.attrib.get('sum')  # Pega a distância (sum)
 
-                data['calories'] = float(calories)
-                data['heart_rate_min'] = heart_rate_min
-                data['heart_rate_max'] = heart_rate_max
-                data['heart_rate_avg'] = heart_rate_avg
-                data['distance_km'] = distance_km
+                            data['calories'] = float(calories)
+                            data['heart_rate_min'] = heart_rate_min
+                            data['heart_rate_max'] = heart_rate_max
+                            data['heart_rate_avg'] = heart_rate_avg
+                            data['distance_km'] = distance_km
 
-            if attribute and attribute in data:
-                if data[attribute] in values:
-                    rows.append(data)  # Extrai os atributos como dicionário
-            elif not attribute:
-                rows.append(data)  # Extrai os atributos como dicionário
-            elem.clear()
+                        if attribute and attribute in data:
+                            if data[attribute] in values:
+                                rows.append(data)  # Extrai os atributos como dicionário
+                        elif not attribute:
+                            rows.append(data)  # Extrai os atributos como dicionário
+                        elem.clear()
     return pd.DataFrame(rows)
 
 
@@ -193,7 +197,7 @@ default_year  = this_year if this_month == 12 else this_year - 1
 default_index = year_range.index(default_year)
 selected_year = st.selectbox("Choose a year:", year_range, index=default_index)
 
-my_file = st.file_uploader("Select a file", type=["xml"], label_visibility="hidden")
+my_file = st.file_uploader("Select a file", type=["zip"], label_visibility="hidden")
 
 if my_file is not None:
     st.write("Importing Fitness data...")
