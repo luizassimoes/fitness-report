@@ -41,9 +41,8 @@ def spaced_str(var):
 
 # Building a tree of intervals from df_workout
 def build_interval_tree(df_workout):
-    df_workout['startDate'] = pd.to_datetime(df_workout['startDate'])
-    df_workout['endDate']   = pd.to_datetime(df_workout['endDate'])
-
+    # df_workout['startDate'] = pd.to_datetime(df_workout['startDate'])
+    # df_workout['endDate']   = pd.to_datetime(df_workout['endDate'])
     tree = IntervalTree()
     for _, row in df_workout.iterrows():
         start = row['startDate'] - pd.Timedelta(seconds=1)
@@ -86,10 +85,29 @@ def parse_large_xml(file, tag, attribute=None, values=[]):
             data = elem.attrib
 
             if tag == 'Workout':
-                distance_km = None  
+                active_cal, basal_cal, distance_km = (0,) * 3
+                heart_rate_min, heart_rate_max, heart_rate_avg = (0,) * 3
+
                 for child in elem:
-                    if child.tag == 'WorkoutStatistics' and 'Distance' in child.attrib.get('type', ''):
-                        distance_km = child.attrib.get('sum')  # Pega a distância (sum)
+                    if child.tag == 'WorkoutStatistics':
+                        if 'ActiveEnergyBurned' in child.attrib.get('type', ''):
+                            active_cal = child.attrib.get('sum')
+                        elif 'BasalEnergyBurned' in child.attrib.get('type', ''):
+                            basal_cal = child.attrib.get('sum')
+                        elif 'HeartRate' in child.attrib.get('type', ''):
+                            heart_rate_min = child.attrib.get('minimum')
+                            heart_rate_max = child.attrib.get('maximum')
+                            heart_rate_avg = child.attrib.get('average')
+                        elif 'Distance' in child.attrib.get('type', ''):
+                            km_sports = ['Running', 'Swimming', 'Cycling', 'Walking', 'Hiking']
+                            if data['workoutActivityType'].endswith(tuple(km_sports)):
+                                distance_km = child.attrib.get('sum')  # Pega a distância (sum)
+
+                calories = float(active_cal) + float(basal_cal)
+                data['calories'] = calories
+                data['heart_rate_min'] = heart_rate_min
+                data['heart_rate_max'] = heart_rate_max
+                data['heart_rate_avg'] = heart_rate_avg
                 data['distance_km'] = distance_km
 
             if attribute and attribute in data:
@@ -192,95 +210,87 @@ if my_file is not None:
         st.error("Sorry, there are no Workout records for that year.")
         st.stop()
 
-    st.write("Importing Health data...")
-    att_list = ['HKQuantityTypeIdentifierHeartRate', 'HKQuantityTypeIdentifierActiveEnergyBurned'] 
-    df_heart_cal = parse_large_xml(my_file, tag='Record', attribute='type', values=att_list)
-    df_heart_cal = df_heart_cal.drop(['sourceName', 'sourceVersion', 'device', 'unit', 'creationDate', 'endDate'], axis=1)
-    df_heart_cal = df_heart_cal[df_heart_cal['startDate'].str.startswith(f"{selected_year}")].reset_index(drop=True)
+    wk_int_columns = ['duration', 'heart_rate_min', 'heart_rate_max', 'heart_rate_avg', 'calories']
+    df_workout[wk_int_columns] = df_workout[wk_int_columns].apply(lambda row: pd.to_numeric(row, errors='coerce').fillna(0).astype(int))
+
+    df_workout['workoutActivityType'] = df_workout['workoutActivityType'].str.split('ActivityType').where(df_workout['workoutActivityType'].notnull(), np.nan).str[1]
+    df_workout['workoutActivityType'] = df_workout['workoutActivityType'].apply(spaced_str)
+
+    date_columns = ['startDate', 'endDate', 'creationDate'] 
+    for col in date_columns:
+        df_workout[col] = pd.to_datetime(df_workout[col])
+
+
+    if all(df_workout['heart_rate_avg'] == 0):
+        st.write("Importing Health data...")
+
+        att_list = ['HKQuantityTypeIdentifierHeartRate'] 
+        df_heart_rate = parse_large_xml(my_file, tag='Record', attribute='type', values=att_list)
+        df_heart_rate = df_heart_rate.drop(['sourceName', 'sourceVersion', 'device', 'unit', 'creationDate', 'endDate'], axis=1)
+        df_heart_rate = df_heart_rate.rename(columns={'value': 'heart_rate'})
+        df_heart_rate = df_heart_rate[df_heart_rate['startDate'].str.startswith(f"{selected_year}")].reset_index(drop=True)
+        
+        df_heart_rate[['heart_rate']] = df_heart_rate[['heart_rate']].apply(lambda row: pd.to_numeric(row, errors='coerce').fillna(0).astype(int))
+
+        df_workout = df_workout.drop(columns=['heart_rate_min', 'heart_rate_max', 'heart_rate_avg'])
+
+        # Processo de união dos dataframes:
+        ids = pd.Series(range(1, len(df_workout) + 1))
+        df_workout = pd.concat([ids.rename('id'), df_workout], axis=1)
+
+        workout_tree = build_interval_tree(df_workout)
+        df_heart_rate = assign_workout_id(df_heart_rate, workout_tree)  
+
+        df_heart_rate = df_heart_rate[~df_heart_rate['id'].isna()].reset_index(drop=True)
+
+        df_heart_rate = df_heart_rate.groupby('id').agg(
+                    heart_rate_avg=('heart_rate', 'mean'),
+                    heart_rate_max=('heart_rate', 'max'),
+                    heart_rate_min=('heart_rate', 'min')
+                    ).reset_index()
+
+        hr_int_columns = [col for col in df_heart_rate.columns if col.startswith('heart_rate')]
+        df_heart_rate[hr_int_columns] = df_heart_rate[hr_int_columns].apply(lambda row: pd.to_numeric(row, errors='coerce').fillna(0).astype(int))
+
+        df_workout = pd.merge(df_workout, df_heart_rate, on='id', how='left')
+
 
     st.write("Importing Activity data...")
     df_activity = parse_large_xml(my_file, tag='ActivitySummary')
     df_activity = df_activity[['dateComponents', 'activeEnergyBurned', 'activeEnergyBurnedGoal', 'appleExerciseTime']]
-    df_activity  = df_activity[df_activity['dateComponents'].str.startswith(f"{selected_year}")].reset_index(drop=True)
+    df_activity = df_activity[df_activity['dateComponents'].str.startswith(f"{selected_year}")].reset_index(drop=True)
+
+    ac_int_columns = ['activeEnergyBurned', 'appleExerciseTime', 'activeEnergyBurnedGoal']
+    df_activity[ac_int_columns] = df_activity[ac_int_columns].apply(lambda row: pd.to_numeric(row, errors='coerce').fillna(0).astype(int))
+
 
     # st.write("All data imported.")
     st.write("Calculating your results...")
 
     # Adjusting numeric values
     st.write()
-    df_workout['duration'] = df_workout['duration'].apply(lambda value: int(float(value)) if pd.notna(value) else np.nan)
-    df_workout['duration'] = df_workout['duration'].astype('Int64')
-
-    df_activity['activeEnergyBurned'] = df_activity['activeEnergyBurned'].apply(lambda value: int(float(value)) if pd.notna(value) else np.nan)
-    df_activity['activeEnergyBurned'] = df_activity['activeEnergyBurned'].astype('Int64')
-    df_activity['appleExerciseTime']  = df_activity['appleExerciseTime'].astype('Int64')
-
-    df_activity['activeEnergyBurnedGoal'] = df_activity['activeEnergyBurnedGoal'].astype('Int64')
     
-    df_workout['workoutActivityType'] = df_workout['workoutActivityType'].str.split('ActivityType').where(df_workout['workoutActivityType'].notnull(), np.nan).str[1]
-    df_workout['workoutActivityType'] = df_workout['workoutActivityType'].apply(spaced_str)
-
-    df_heart_rate = df_heart_cal.loc[df_heart_cal['type'].str.endswith('HeartRate')].reset_index(drop=True)
-    df_calories   = df_heart_cal.loc[df_heart_cal['type'].str.endswith('ActiveEnergyBurned')].reset_index(drop=True)
-    df_heart_rate = df_heart_rate.rename(columns={'value': 'heart_rate'})
-    df_calories = df_calories.rename(columns={'value': 'calories'})
-
-    df_heart_rate['heart_rate'] = df_heart_rate['heart_rate'].astype(float).astype(int)
-    df_calories['calories'] = df_calories['calories'].astype(float)
-
-    ids = pd.Series(range(1, len(df_workout) + 1))
-    df_workout = pd.concat([ids.rename('id'), df_workout], axis=1)
-
-    workout_tree = build_interval_tree(df_workout)
-
-    df_heart_rate = assign_workout_id(df_heart_rate, workout_tree)
-    df_calories   = assign_workout_id(df_calories, workout_tree)
-
-    df_heart_rate = df_heart_rate[~df_heart_rate['id'].isna()].reset_index(drop=True)
-    df_calories   = df_calories[~df_calories['id'].isna()].reset_index(drop=True)
-
-    df_calories = df_calories.groupby(['id']).agg({'calories': 'sum'})
-    
-    df_full = pd.merge(df_workout, df_heart_rate[['id', 'heart_rate']], on='id', how='left')
     
     # Adding date columns:
     months_dict = {1: 'JAN', 2: 'FEB', 3: 'MAR', 4: 'APR', 5: 'MAY', 6: 'JUN', 
                 7: 'JUL', 8: 'AUG', 9: 'SEP', 10: 'OCT', 11: 'NOV', 12: 'DEC'}
 
-    df_full['date']  = df_full['startDate'].dt.date
-    df_full['month'] = df_full['startDate'].dt.month
-    df_full['year']  = df_full['startDate'].dt.year
-    df_full['month_name'] = df_full['month'].map(months_dict)
+    df_workout['date']  = df_workout['startDate'].dt.date
+    df_workout['month'] = df_workout['startDate'].dt.month
+    df_workout['year']  = df_workout['startDate'].dt.year
+    df_workout['month_name'] = df_workout['month'].map(months_dict)
 
     df_activity['dateComponents'] = pd.to_datetime(df_activity['dateComponents'])
     df_activity['month'] = df_activity['dateComponents'].dt.month
     df_activity['month_name'] = df_activity['month'].map(months_dict)
 
-    
-    # Defining Heart Rate info necessary:
-    col_names_hr = ['id', 'workoutActivityType', 'duration', 'date','month', 'month_name' ]
 
-    df_hr_mean = df_full.groupby(col_names_hr).agg({'heart_rate': 'mean'})
-    df_hr_mean = df_hr_mean.reset_index()
-    df_hr_mean = df_hr_mean.rename(columns={'heart_rate': 'heart_rate_mean'})
-
-    df_hr_mean['heart_rate_mean'] = df_hr_mean['heart_rate_mean'].apply(lambda value: int(value) if not pd.isna(value) else value)
-
-    serie_hr_max = df_full.groupby(col_names_hr).agg({'heart_rate': 'max'}).reset_index(drop=True)
-    serie_hr_max.columns = ['heart_rate_max']
-
-    df_v1 = pd.concat([df_hr_mean, serie_hr_max], axis=1)
-    
-    df_v2 = pd.merge(df_v1, df_calories, on='id', how='left')
-    df_v2['calories'] = df_v2['calories'].fillna(0)
-    df_v2['calories'] = df_v2['calories'].astype(int)
-    
     # Results:
 
     # Distance:
-    df_workout['distance_km'] = df_workout['distance_km'].astype(float).round(2)
-    kms = df_workout[~df_workout['distance_km'].isna()].groupby('workoutActivityType').agg({'duration': 'sum', 'distance_km': 'sum', 'id': 'count'}).reset_index()
-    kms = kms[kms['distance_km'] > 0]
+    df_workout['distance_km'] = df_workout['distance_km'].astype(int)
+    kms = df_workout[~df_workout['distance_km'].isna()].groupby('workoutActivityType').agg({'duration': 'sum', 'distance_km': 'sum', 'creationDate': 'count'}).reset_index()
+    kms = kms[kms['distance_km'] != 0]
     kms = kms.sort_values('distance_km', ascending=False)
 
     total_kms = kms['distance_km'].sum()
@@ -288,12 +298,12 @@ if my_file is not None:
 
 
     # Top sports:
-    sports_by_count    = df_v2['workoutActivityType'].value_counts()
+    sports_by_count    = df_workout['workoutActivityType'].value_counts()
     total_sports       = len(sports_by_count)
     top_sport_by_count = sports_by_count.idxmax()
     count_top_sport    = sports_by_count.max()
 
-    top_sports_by_time = df_v2.groupby(by=['workoutActivityType']).agg({'duration': 'sum', 'calories': 'sum', 'date': 'count'}).sort_values(by='duration', ascending=False)
+    top_sports_by_time = df_workout.groupby(by=['workoutActivityType']).agg({'duration': 'sum', 'calories': 'sum', 'date': 'count'}).sort_values(by='duration', ascending=False)
 
     top_sport_by_time       = top_sports_by_time.idxmax().iloc[0]
     time_top_sport          = top_sports_by_time.max().iloc[0]
@@ -304,14 +314,14 @@ if my_file is not None:
 
     
     # Heart Rate:
-    highest_heart_rate = df_v2.loc[df_v2['heart_rate_max'].idxmax(), :]
-    heart_rate_per_sport = df_v2.groupby(['workoutActivityType']).agg({'heart_rate_mean': 'mean'})
+    highest_heart_rate = df_workout.loc[df_workout['heart_rate_max'].idxmax(), :]
+    heart_rate_per_sport = df_workout.groupby(['workoutActivityType']).agg({'heart_rate_avg': 'mean'})
     sport_highest_avg_heart_rate = heart_rate_per_sport.idxmax().iloc[0]
     highest_avg_heart_rate = int(heart_rate_per_sport.max().iloc[0])
 
     
     # Calories:
-    calories_per_sport = df_v2.groupby(['workoutActivityType']).agg({'calories': 'mean'})
+    calories_per_sport = df_workout.groupby(['workoutActivityType']).agg({'calories': 'mean'})
     sport_highest_avg_calories = calories_per_sport.idxmax().iloc[0]
     highest_avg_calories = int(calories_per_sport.max().iloc[0])
 
@@ -319,7 +329,7 @@ if my_file is not None:
     # Total time exercising and goals:
     exercise_total_time = top_sports_by_time['duration'].sum()
     exercise_time_per_day = int(exercise_total_time/365)
-    exercise_total_days = len(df_v2['date'].drop_duplicates())
+    exercise_total_days = len(df_workout['date'].drop_duplicates())
     exercise_total_calories = top_sports_by_time['calories'].sum()
     exercise_calories_per_day = int(exercise_total_calories/365)
 
@@ -331,14 +341,14 @@ if my_file is not None:
 
     
     # Top day of exercises:
-    top_exercise_day_data = df_v2.groupby(['date']).agg({'duration': 'sum', 'calories': 'sum'})
+    top_exercise_day_data = df_workout.groupby(['date']).agg({'duration': 'sum', 'calories': 'sum'})
 
     top_exercise_day = top_exercise_day_data.idxmax()['duration']
 
     top_exercise_day_calories = top_exercise_day_data.loc[top_exercise_day, 'calories']
     top_exercise_day_time = top_exercise_day_data.loc[top_exercise_day, 'duration']
 
-    top_exercise_day_training = df_v2.loc[df_v2['date'] == (top_exercise_day)]
+    top_exercise_day_training = df_workout.loc[df_workout['date'] == (top_exercise_day)]
     top_exercise_day_training = top_exercise_day_training.rename(
         columns={
             'workoutActivityType': 'Sport',
@@ -356,7 +366,7 @@ if my_file is not None:
     top_active_day_calories = top_active_day_data['activeEnergyBurned']
     top_active_day_time = top_active_day_data['appleExerciseTime']
 
-    top_active_day_training = df_v2.loc[df_v2['date'] == (top_active_day)]
+    top_active_day_training = df_workout.loc[df_workout['date'] == (top_active_day)]
     top_active_day_training = top_active_day_training.rename(
         columns={
             'workoutActivityType': 'Sport',
@@ -374,7 +384,7 @@ if my_file is not None:
     row_year_1 = f'You exercised for {tsd(exercise_total_time)} minutes this year in {exercise_total_days} different days and burned {tsd(exercise_total_calories)} calories!'
     row_year_2 = f'That is an average of {exercise_time_per_day} minutes and {exercise_calories_per_day} calories per day.'
 
-    row_mileage_1   = f'You covered a lot of kilometers this year... {total_kms}!'
+    row_mileage_1   = f'You covered a lot of kilometers this year... {tsd(total_kms)}!'
     row_mileage_2   = 'Check it out how you did it:'
     table_mileage_1 = kms.copy()
     table_mileage_1.columns = ['Sport', 'Total Minutes', 'Total kms', 'Sessions']
@@ -467,22 +477,22 @@ if my_file is not None:
     plt.savefig(img_buffer_1, format='png', dpi=100)
 
     
-    df_v2_gb = df_v2.groupby(['month', 'month_name', 'workoutActivityType']).agg({'duration': 'sum'}).reset_index()
-    df_v2_sport_time = df_v2.groupby(['workoutActivityType']).agg({'duration': 'sum'}).reset_index()
-    df_v2_sport_time = df_v2_sport_time.sort_values(by='duration', ascending=False)
+    df_workout_gb = df_workout.groupby(['month', 'month_name', 'workoutActivityType']).agg({'duration': 'sum'}).reset_index()
+    df_workout_sport_time = df_workout.groupby(['workoutActivityType']).agg({'duration': 'sum'}).reset_index()
+    df_workout_sport_time = df_workout_sport_time.sort_values(by='duration', ascending=False)
 
     fig, ax1 = plt.subplots(figsize=(18, 5))
-    lp_time_per_sport = sns.barplot(data=df_v2_sport_time, x='workoutActivityType', y='duration', hue='workoutActivityType');
+    lp_time_per_sport = sns.barplot(data=df_workout_sport_time, x='workoutActivityType', y='duration', hue='workoutActivityType');
     ax1.yaxis.set_visible(False)
     ax1.set_ylim()
 
-    labels = [textwrap.fill(label, width=11) for label in df_v2_sport_time['workoutActivityType']]  # Limitando a 14 caracteres e quebrando a linha
+    labels = [textwrap.fill(label, width=11) for label in df_workout_sport_time['workoutActivityType']]  # Limitando a 14 caracteres e quebrando a linha
     ax1.set_xticks(range(len(labels)))  # Definindo o número de ticks com base no número de rótulos
     ax1.set_xticklabels(labels, rotation=0, fontdict={'fontsize': 10});  
     ax1.set_xlabel('');
-    ax1.set_title('Your Workout Distribution', fontdict={'fontsize': 16})
+    ax1.set_title('Your Workout Distribution', fontdict={'fontsize': 20})
 
-    y_max = df_v2_sport_time['duration'].max()
+    y_max = df_workout_sport_time['duration'].max()
     ax1.set_ylim(0, y_max * 1.08)
 
     for container in lp_time_per_sport.containers:
