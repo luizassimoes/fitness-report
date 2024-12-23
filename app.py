@@ -173,7 +173,7 @@ st.title("🏋️ Fitness Wrapped")
 st.write("Developed by [Luiza Souza Simões](https://www.linkedin.com/in/luizassimoes/).")
 st.write(" ")
 
-st.write("**Here is how you can use this app:**   _(if you already know it, just [skip to the importer](#importer))_")
+st.write("**Here is how you can use this app:**   _(if you already know, you can just [skip to the importer](#importer))_")
 st.write("1. On your iPhone, open the **Health app**.")
 st.write("2. Tap your profile picture (or initials) in the top right corner.")
 st.write("3. Scroll down and click **Export All Health Data**")
@@ -388,7 +388,7 @@ if my_file is not None:
     row_year_2 = f'That is an average of {exercise_time_per_day} minutes and {exercise_calories_per_day} calories per day.'
 
     row_mileage_1   = f'You covered a lot of kilometers this year... {tsd(total_kms)}!'
-    row_mileage_2   = 'Check it out how you did it:'
+    row_mileage_2   = 'Here is how you did it:'
     table_mileage_1 = kms.copy()
     table_mileage_1.columns = ['Sport', 'Total Minutes', 'Total kms', 'Sessions']
 
