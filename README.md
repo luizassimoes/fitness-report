@@ -1,6 +1,8 @@
 # Fitness Report for Apple Watch
 
 Get your year stats here! See how much you pushed yourself this year with a detailed report containing time, mileage, calories, and heart rate information!
+Go to [fitness-report.streamlit.app](https://fitness-report.streamlit.app/)!
+
 
 ### Motivation:
 
