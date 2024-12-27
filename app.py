@@ -124,7 +124,7 @@ def parse_large_xml(file, tag, attribute=None, values=[]):
                     rows.append(data)  # Extrai os atributos como dicionário
             elif not attribute:
                 rows.append(data)  # Extrai os atributos como dicionário
-            elem.clear()
+        elem.clear()
     return pd.DataFrame(rows)
 
 
