@@ -124,7 +124,7 @@ def parse_large_xml(file, tag, attribute=None, values=[]):
                     rows.append(data)  # Extrai os atributos como dicionário
             elif not attribute:
                 rows.append(data)  # Extrai os atributos como dicionário
-        elem.clear()
+            elem.clear()
     return pd.DataFrame(rows)
 
 
@@ -208,11 +208,8 @@ selected_year = st.selectbox("Choose a year:", year_range, index=default_index)
 my_file = st.file_uploader("Select a file", type=["zip"], label_visibility="hidden")
 
 if my_file is not None:
-    st.write(1)
-
     file_xml = extract_xml(my_file)
 
-    st.write(5)
     st.write("Importing Fitness data...")
     try:
         df_workout = parse_large_xml(file_xml, tag='Workout')
@@ -221,7 +218,7 @@ if my_file is not None:
     except:
         st.error("Are you sure you uploaded the correct file? Something went wrong... please try again.")
         st.stop()
-    st.write(6)
+
     if df_workout.empty:
         st.error("Sorry, there are no Workout records for that year.")
         st.stop()
@@ -284,9 +281,7 @@ if my_file is not None:
 
     # st.write("All data imported.")
     st.write("Calculating your results...")
-
-    # Adjusting numeric values
-    st.write()
+    st.write(" ")
     
     
     # Adding date columns:
