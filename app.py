@@ -241,6 +241,7 @@ if my_file is not None:
         st.write("Importing Health data...")
 
         att_list = ['HKQuantityTypeIdentifierHeartRate'] 
+        file_xml = extract_xml(my_file)
         df_heart_rate = parse_large_xml(file_xml, tag='Record', attribute='type', values=att_list)
         df_heart_rate = df_heart_rate.drop(['sourceName', 'sourceVersion', 'device', 'unit', 'creationDate', 'endDate'], axis=1)
         df_heart_rate = df_heart_rate.rename(columns={'value': 'heart_rate'})
@@ -272,6 +273,7 @@ if my_file is not None:
 
 
     st.write("Importing Activity data...")
+    file_xml = extract_xml(my_file)
     df_activity = parse_large_xml(file_xml, tag='ActivitySummary')
     df_activity = df_activity[['dateComponents', 'activeEnergyBurned', 'activeEnergyBurnedGoal', 'appleExerciseTime']]
     df_activity = df_activity[df_activity['dateComponents'].str.startswith(f"{selected_year}")].reset_index(drop=True)
