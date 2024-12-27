@@ -101,6 +101,8 @@ def parse_large_xml(file, tag, attribute=None, values=[]):
                             km_sports = ['Running', 'Swimming', 'Cycling', 'Walking', 'Hiking']
                             if data['workoutActivityType'].endswith(tuple(km_sports)):
                                 distance_km = child.attrib.get('sum')  # Pega a distância (sum)
+                                if data['workoutActivityType'].endswith('Swimming'):
+                                    distance_km = float(distance_km)/1000
 
                 data['calories'] = float(calories)
                 data['heart_rate_min'] = heart_rate_min
@@ -297,7 +299,7 @@ if my_file is not None:
     # Results:
 
     # Distance:
-    df_workout['distance_km'] = df_workout['distance_km'].astype(float).astype(int)
+    df_workout['distance_km'] = df_workout['distance_km'].astype(float).round(2)
     kms = df_workout[~df_workout['distance_km'].isna()].groupby('workoutActivityType').agg({'duration': 'sum', 'distance_km': 'sum', 'creationDate': 'count'}).reset_index()
     kms = kms[kms['distance_km'] != 0]
     kms = kms.sort_values('distance_km', ascending=False)
