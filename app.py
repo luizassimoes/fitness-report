@@ -170,7 +170,7 @@ def insert_table(sheet, table, dark, light):
 
 st.set_page_config(page_title="Fitness Wrapped", page_icon="💪")
 st.title("🏋️ Fitness Wrapped")
-st.write("Developed by [Luiza Souza Simões](https://www.linkedin.com/in/luizassimoes/).")
+st.write("Developed by [Luiza Souza Simões](https://www.linkedin.com/in/luizassimoes/)")
 st.write(" ")
 
 st.write("**Here is how you can use this app:**   _(if you already know, you can just [skip to the importer](#importer))_")
@@ -180,6 +180,8 @@ st.write("3. Scroll down and click **Export All Health Data**")
 st.write("4. Confirm and wait for the process to complete. It can take a minute.")
 st.write("5. Once finished, save the ZIP file to a folder using **Save to Files**.")
 st.write("6. Upload the file below and enjoy exploring how your year went!")
+st.write("")
+st.write("**Note:** This app runs for operating systems in English and Portuguese. Let me know if there is a different languange you would like to use.")
 
 
 st.markdown('<div id="importer"></div>', unsafe_allow_html=True)
