@@ -196,9 +196,13 @@ my_file = st.file_uploader("Select a file", type=["zip"], label_visibility="hidd
 
 if my_file is not None:
 
+    filenames = ['export', 'exportar']
+
     with zipfile.ZipFile(my_file) as z:
-        if 'apple_health_export/export.xml' in z.namelist():
-            file_xml = z.open('apple_health_export/export.xml')
+        for filename in filenames: 
+            if f'apple_health_export/{filename}.xml' in z.namelist():
+                file_xml = z.open(f'apple_health_export/{filename}.xml')
+                break
 
     st.write("Importing Fitness data...")
     try:
