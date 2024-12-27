@@ -74,7 +74,7 @@ def assign_workout_id(df, interval_tree):
     return df
 
 
-def parse_large_xml(file, tag, attribute=None, values=[]):
+def parse_large_xml(file, tag, year, attribute=None, values=[]):
     """
     Lê um XML grande de forma eficiente, processando elementos específicos.
     
@@ -93,6 +93,13 @@ def parse_large_xml(file, tag, attribute=None, values=[]):
         if elem.tag == tag:
 
             data = elem.attrib
+
+            # Filtro pelo ano
+            if year:
+                start_date = data.get('startDate')  # Pega o atributo startDate
+                if start_date and not start_date.startswith(str(year)):  # Verifica o ano
+                    elem.clear()  # Limpa o elemento para economizar memória
+                    continue
 
             if tag == 'Workout':
                 calories, distance_km = (0,) * 2
@@ -212,9 +219,9 @@ if my_file is not None:
 
     st.write("Importing Fitness data...")
     try:
-        df_workout = parse_large_xml(file_xml, tag='Workout')
+        df_workout = parse_large_xml(file_xml, tag='Workout', year=selected_year)
         df_workout = df_workout.drop(columns=['durationUnit', 'sourceName', 'sourceVersion'], axis=1)
-        df_workout = df_workout[df_workout['startDate'].str.startswith(f"{selected_year}")].reset_index(drop=True)
+        # df_workout = df_workout[df_workout['startDate'].str.startswith(f"{selected_year}")].reset_index(drop=True)
     except:
         st.error("Are you sure you uploaded the correct file? Something went wrong... please try again.")
         st.stop()
@@ -239,10 +246,10 @@ if my_file is not None:
 
         att_list = ['HKQuantityTypeIdentifierHeartRate'] 
         file_xml = extract_xml(my_file)
-        df_heart_rate = parse_large_xml(file_xml, tag='Record', attribute='type', values=att_list)
+        df_heart_rate = parse_large_xml(file_xml, year=selected_year, tag='Record', attribute='type', values=att_list)
         df_heart_rate = df_heart_rate.drop(['sourceName', 'sourceVersion', 'device', 'unit', 'creationDate', 'endDate'], axis=1)
         df_heart_rate = df_heart_rate.rename(columns={'value': 'heart_rate'})
-        df_heart_rate = df_heart_rate[df_heart_rate['startDate'].str.startswith(f"{selected_year}")].reset_index(drop=True)
+        # df_heart_rate = df_heart_rate[df_heart_rate['startDate'].str.startswith(f"{selected_year}")].reset_index(drop=True)
         
         df_heart_rate[['heart_rate']] = df_heart_rate[['heart_rate']].apply(lambda row: pd.to_numeric(row, errors='coerce').fillna(0).astype(int))
 
@@ -271,9 +278,9 @@ if my_file is not None:
 
     st.write("Importing Activity data...")
     file_xml = extract_xml(my_file)
-    df_activity = parse_large_xml(file_xml, tag='ActivitySummary')
+    df_activity = parse_large_xml(file_xml, year=selected_year, tag='ActivitySummary')
     df_activity = df_activity[['dateComponents', 'activeEnergyBurned', 'activeEnergyBurnedGoal', 'appleExerciseTime']]
-    df_activity = df_activity[df_activity['dateComponents'].str.startswith(f"{selected_year}")].reset_index(drop=True)
+    # df_activity = df_activity[df_activity['dateComponents'].str.startswith(f"{selected_year}")].reset_index(drop=True)
 
     ac_int_columns = ['activeEnergyBurned', 'appleExerciseTime', 'activeEnergyBurnedGoal']
     df_activity[ac_int_columns] = df_activity[ac_int_columns].apply(lambda row: pd.to_numeric(row, errors='coerce').fillna(0).astype(int))
