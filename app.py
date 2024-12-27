@@ -17,6 +17,15 @@ from openpyxl.drawing.image import Image
 from openpyxl.styles import PatternFill, Font, Alignment
 
 
+def extract_xml(my_file):
+    filenames = ['export', 'exportar']
+    with zipfile.ZipFile(my_file) as z:
+        for filename in filenames: 
+            if f'apple_health_export/{filename}.xml' in z.namelist():
+                file_xml = z.open(f'apple_health_export/{filename}.xml')
+                z.close() 
+                break
+    return file_xml
 
 def spaced_str(var):
   """Inserts spaces before capitalized letters.
@@ -201,16 +210,8 @@ my_file = st.file_uploader("Select a file", type=["zip"], label_visibility="hidd
 if my_file is not None:
     st.write(1)
 
-    filenames = ['export', 'exportar']
-    st.write(2)
-    with zipfile.ZipFile(my_file) as z:
-        for filename in filenames: 
-            if f'apple_health_export/{filename}.xml' in z.namelist():
-                st.write(3)
-                file_xml = z.open(f'apple_health_export/{filename}.xml')
-                st.write(4)
-                z.close() 
-                break
+    file_xml = extract_xml(my_file)
+
     st.write(5)
     st.write("Importing Fitness data...")
     try:
