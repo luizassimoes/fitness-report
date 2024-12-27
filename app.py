@@ -209,6 +209,7 @@ if my_file is not None:
                 st.write(3)
                 file_xml = z.open(f'apple_health_export/{filename}.xml')
                 st.write(4)
+                z.close() 
                 break
     st.write(5)
     st.write("Importing Fitness data...")
