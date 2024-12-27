@@ -393,7 +393,7 @@ if my_file is not None:
 
     
     row_year_1 = f'You exercised for {tsd(exercise_total_time)} minutes this year in {exercise_total_days} different days and burned {tsd(exercise_total_calories)} calories!'
-    row_year_2 = f'That is an average of {exercise_time_per_day} minutes and {exercise_calories_per_day} calories per day.'
+    row_year_2 = f'That is like exercising for {exercise_time_per_day} minutes and burning {exercise_calories_per_day} calories per day every day!'
 
     row_mileage_1   = f'You covered a lot of kilometers this year... {tsd(total_kms)}!'
     row_mileage_2   = 'Here is how you did it:'
