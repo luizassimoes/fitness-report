@@ -199,15 +199,18 @@ selected_year = st.selectbox("Choose a year:", year_range, index=default_index)
 my_file = st.file_uploader("Select a file", type=["zip"], label_visibility="hidden")
 
 if my_file is not None:
+    st.write(1)
 
     filenames = ['export', 'exportar']
-
+    st.write(2)
     with zipfile.ZipFile(my_file) as z:
         for filename in filenames: 
             if f'apple_health_export/{filename}.xml' in z.namelist():
+                st.write(3)
                 file_xml = z.open(f'apple_health_export/{filename}.xml')
+                st.write(4)
                 break
-
+    st.write(5)
     st.write("Importing Fitness data...")
     try:
         df_workout = parse_large_xml(file_xml, tag='Workout')
@@ -216,7 +219,7 @@ if my_file is not None:
     except:
         st.error("Are you sure you uploaded the correct file? Something went wrong... please try again.")
         st.stop()
-
+    st.write(6)
     if df_workout.empty:
         st.error("Sorry, there are no Workout records for that year.")
         st.stop()
