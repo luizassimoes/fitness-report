@@ -373,7 +373,7 @@ if my_file is not None:
     top_active_day_calories = top_active_day_data['activeEnergyBurned']
     top_active_day_time = top_active_day_data['appleExerciseTime']
 
-    top_active_day_training = df_workout.loc[df_workout['date'] == (top_active_day)]
+    top_active_day_training = df_workout.loc[df_workout['date'] == (top_active_day.date())]
     top_active_day_training = top_active_day_training.rename(
         columns={
             'workoutActivityType': 'Sport',
@@ -605,6 +605,7 @@ if my_file is not None:
     sheet.cell(row=curr_row+1, column=2).value = row_day_5
     sheet.cell(row=curr_row+3, column=2).value = row_day_6
     if not row_day_6.startswith('However'):
+        sheet.cell(row=curr_row+3, column=2).font = Font(bold=True)
         sheet = insert_table(sheet, table_day_2, dark_blue, light_blue)
 
     # Goals
