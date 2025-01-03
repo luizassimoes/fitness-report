@@ -8,6 +8,8 @@ import seaborn as sns
 import streamlit as st
 import matplotlib.pyplot as plt
 import xml.etree.ElementTree as ET
+
+from lxml import etree
 from intervaltree import IntervalTree
 from datetime import date
 
@@ -15,6 +17,21 @@ from io import BytesIO
 from openpyxl import Workbook
 from openpyxl.drawing.image import Image
 from openpyxl.styles import PatternFill, Font, Alignment
+
+import psutil
+import time
+def get_memory_usage():
+    process = psutil.Process()
+    memory_info = process.memory_info()
+    return memory_info.rss / (1024 ** 2)  # Convert bytes to MB
+def timing(func):
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        print(f"{func.__name__} executado em {end_time - start_time:.2f} segundos")
+        return result
+    return wrapper
 
 
 def extract_xml(my_file):
@@ -73,12 +90,12 @@ def assign_workout_id(df, interval_tree):
     df['id'] = ids
     return df
 
-
-def parse_large_xml(file, tag, year, attribute=None, values=[]):
+@timing
+def parse_large_xml(file, tag, attribute=None, values=[]):
     """
-    Lê um XML grande de forma eficiente, processando elementos específicos.
-    
-    Args:
+        Lê um XML grande de forma eficiente, processando elementos específicos.
+        
+        Args:
     - file: Caminho para o arquivo XML.
     - tag: Tag que você deseja extrair (ex.: 'Record').
     - attribute: Atributo que você deseja filtrar (opcional).
@@ -87,19 +104,29 @@ def parse_large_xml(file, tag, year, attribute=None, values=[]):
     Returns:
     - DataFrame contendo os dados extraídos.
     """
+
+    file_xml.seek(0, 2)  # Move o ponteiro para o final do arquivo
+    size = file_xml.tell()
+    print(f"Tamanho do arquivo XML: {size/10**6} Mbytes")
+
+    if size > 900: # MB
+        context = etree.iterparse(file, events=("end",), tag=tag)
+        if tag == 'Workout':
+            st.write("<p style='color: #7092BE;'>Seems like we are dealing with a big file! Hang in there, it can take about a minute or two.</p>", unsafe_allow_html=True)
+    else:
+        context = ET.iterparse(file, events=('end',))
+
     rows = []
     file.seek(0)
-    for event, elem in ET.iterparse(file, events=('end',)):
+    # context = etree.iterparse(file, events=("end",), tag=tag)
+    # for event, elem in ET.iterparse(file, events=('end',)):
+    for event, elem in context:
         if elem.tag == tag:
 
-            data = elem.attrib
-
-            # Filtro pelo ano
-            if year:
-                start_date = data.get('startDate')  # Pega o atributo startDate
-                if start_date and not start_date.startswith(str(year)):  # Verifica o ano
-                    elem.clear()  # Limpa o elemento para economizar memória
-                    continue
+            if size > 900: # MB
+                data = {key: elem.get(key) for key in elem.keys()} 
+            else:
+                data = elem.attrib    
 
             if tag == 'Workout':
                 calories, distance_km = (0,) * 2
@@ -132,6 +159,11 @@ def parse_large_xml(file, tag, year, attribute=None, values=[]):
             elif not attribute:
                 rows.append(data)  # Extrai os atributos como dicionário
             elem.clear()
+            
+            if size > 900: # MB
+                while elem.getprevious() is not None:
+                    del elem.getparent()[0]
+    print(f"Current memory usage: {get_memory_usage():.2f} MB")
     return pd.DataFrame(rows)
 
 
@@ -185,6 +217,7 @@ def insert_table(sheet, table, dark, light):
 
     return sheet
 
+start_time = time.time()
 
 st.set_page_config(page_title="Fitness Wrapped", page_icon="💪")
 st.title("🏋️ Fitness Wrapped")
@@ -213,15 +246,19 @@ default_index = year_range.index(default_year)
 selected_year = st.selectbox("Choose a year:", year_range, index=default_index)
 
 my_file = st.file_uploader("Select a file", type=["zip"], label_visibility="hidden")
-
+print('*'*40)
 if my_file is not None:
+    print(f"Current memory usage before zip: {get_memory_usage():.2f} MB")
+
     file_xml = extract_xml(my_file)
+
+    print(f"Current memory usage after zip: {get_memory_usage():.2f} MB")
 
     st.write("Importing Fitness data...")
     try:
-        df_workout = parse_large_xml(file_xml, tag='Workout', year=selected_year)
+        df_workout = parse_large_xml(file_xml, tag='Workout')
         df_workout = df_workout.drop(columns=['durationUnit', 'sourceName', 'sourceVersion'], axis=1)
-        # df_workout = df_workout[df_workout['startDate'].str.startswith(f"{selected_year}")].reset_index(drop=True)
+        df_workout = df_workout[df_workout['startDate'].str.startswith(f"{selected_year}")].reset_index(drop=True)
     except:
         st.error("Are you sure you uploaded the correct file? Something went wrong... please try again.")
         st.stop()
@@ -246,10 +283,10 @@ if my_file is not None:
 
         att_list = ['HKQuantityTypeIdentifierHeartRate'] 
         file_xml = extract_xml(my_file)
-        df_heart_rate = parse_large_xml(file_xml, year=selected_year, tag='Record', attribute='type', values=att_list)
+        df_heart_rate = parse_large_xml(file_xml, tag='Record', attribute='type', values=att_list)
         df_heart_rate = df_heart_rate.drop(['sourceName', 'sourceVersion', 'device', 'unit', 'creationDate', 'endDate'], axis=1)
         df_heart_rate = df_heart_rate.rename(columns={'value': 'heart_rate'})
-        # df_heart_rate = df_heart_rate[df_heart_rate['startDate'].str.startswith(f"{selected_year}")].reset_index(drop=True)
+        df_heart_rate = df_heart_rate[df_heart_rate['startDate'].str.startswith(f"{selected_year}")].reset_index(drop=True)
         
         df_heart_rate[['heart_rate']] = df_heart_rate[['heart_rate']].apply(lambda row: pd.to_numeric(row, errors='coerce').fillna(0).astype(int))
 
@@ -278,9 +315,9 @@ if my_file is not None:
 
     st.write("Importing Activity data...")
     file_xml = extract_xml(my_file)
-    df_activity = parse_large_xml(file_xml, year=selected_year, tag='ActivitySummary')
+    df_activity = parse_large_xml(file_xml, tag='ActivitySummary')
     df_activity = df_activity[['dateComponents', 'activeEnergyBurned', 'activeEnergyBurnedGoal', 'appleExerciseTime']]
-    # df_activity = df_activity[df_activity['dateComponents'].str.startswith(f"{selected_year}")].reset_index(drop=True)
+    df_activity = df_activity[df_activity['dateComponents'].str.startswith(f"{selected_year}")].reset_index(drop=True)
 
     ac_int_columns = ['activeEnergyBurned', 'appleExerciseTime', 'activeEnergyBurnedGoal']
     df_activity[ac_int_columns] = df_activity[ac_int_columns].apply(lambda row: pd.to_numeric(row, errors='coerce').fillna(0).astype(int))
@@ -656,6 +693,12 @@ if my_file is not None:
     output = BytesIO()
     wb.save(output)
 
+    print("Finalizado.")
+    print('*'*40)
+
+    end_time = time.time()
+    execution_time = end_time - start_time
+    print(f"Tempo total de execução: {execution_time:.2f} segundos")
 
     col1, col2, col3 = st.columns(3)
     with col2:
