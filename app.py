@@ -18,20 +18,20 @@ from openpyxl import Workbook
 from openpyxl.drawing.image import Image
 from openpyxl.styles import PatternFill, Font, Alignment
 
-import psutil
-import time
-def get_memory_usage():
-    process = psutil.Process()
-    memory_info = process.memory_info()
-    return memory_info.rss / (1024 ** 2)  # Convert bytes to MB
-def timing(func):
-    def wrapper(*args, **kwargs):
-        start_time = time.time()
-        result = func(*args, **kwargs)
-        end_time = time.time()
-        print(f"{func.__name__} executado em {end_time - start_time:.2f} segundos")
-        return result
-    return wrapper
+# import psutil
+# import time
+# def get_memory_usage():
+#     process = psutil.Process()
+#     memory_info = process.memory_info()
+#     return memory_info.rss / (1024 ** 2)  # Convert bytes to MB
+# def timing(func):
+#     def wrapper(*args, **kwargs):
+#         start_time = time.time()
+#         result = func(*args, **kwargs)
+#         end_time = time.time()
+#         print(f"{func.__name__} executado em {end_time - start_time:.2f} segundos")
+#         return result
+#     return wrapper
 
 
 def extract_xml(my_file):
@@ -90,7 +90,7 @@ def assign_workout_id(df, interval_tree):
     df['id'] = ids
     return df
 
-@timing
+# @timing
 def parse_large_xml(file, tag, attribute=None, values=[]):
     """
         Lê um XML grande de forma eficiente, processando elementos específicos.
@@ -107,7 +107,7 @@ def parse_large_xml(file, tag, attribute=None, values=[]):
 
     file_xml.seek(0, 2)  # Move o ponteiro para o final do arquivo
     size = file_xml.tell()
-    print(f"Tamanho do arquivo XML: {size/10**6} Mbytes")
+    # print(f"Tamanho do arquivo XML: {size/10**6} Mbytes")
 
     if size > 900: # MB
         context = etree.iterparse(file, events=("end",), tag=tag)
@@ -163,7 +163,7 @@ def parse_large_xml(file, tag, attribute=None, values=[]):
             if size > 900: # MB
                 while elem.getprevious() is not None:
                     del elem.getparent()[0]
-    print(f"Current memory usage: {get_memory_usage():.2f} MB")
+    # print(f"Current memory usage: {get_memory_usage():.2f} MB")
     return pd.DataFrame(rows)
 
 
@@ -217,7 +217,7 @@ def insert_table(sheet, table, dark, light):
 
     return sheet
 
-start_time = time.time()
+# start_time = time.time()
 
 st.set_page_config(page_title="Fitness Wrapped", page_icon="💪")
 st.title("🏋️ Fitness Wrapped")
@@ -246,13 +246,13 @@ default_index = year_range.index(default_year)
 selected_year = st.selectbox("Choose a year:", year_range, index=default_index)
 
 my_file = st.file_uploader("Select a file", type=["zip"], label_visibility="hidden")
-print('*'*40)
+# print('*'*40)
 if my_file is not None:
-    print(f"Current memory usage before zip: {get_memory_usage():.2f} MB")
+    # print(f"Current memory usage before zip: {get_memory_usage():.2f} MB")
 
     file_xml = extract_xml(my_file)
 
-    print(f"Current memory usage after zip: {get_memory_usage():.2f} MB")
+    # print(f"Current memory usage after zip: {get_memory_usage():.2f} MB")
 
     st.write("Importing Fitness data...")
     try:
@@ -693,12 +693,12 @@ if my_file is not None:
     output = BytesIO()
     wb.save(output)
 
-    print("Finalizado.")
-    print('*'*40)
+    # print("Finalizado.")
+    # print('*'*40)
 
-    end_time = time.time()
-    execution_time = end_time - start_time
-    print(f"Tempo total de execução: {execution_time:.2f} segundos")
+    # end_time = time.time()
+    # execution_time = end_time - start_time
+    # print(f"Tempo total de execução: {execution_time:.2f} segundos")
 
     col1, col2, col3 = st.columns(3)
     with col2:
