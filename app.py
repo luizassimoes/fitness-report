@@ -107,8 +107,8 @@ def parse_xml(file, tag, year, attribute=None, values=[]):
     - DataFrame contendo os dados extraídos.
     """
 
-    file_xml.seek(0, 2)  # Move o ponteiro para o final do arquivo
-    size = file_xml.tell()
+    # file_xml.seek(0, 2)  # Move o ponteiro para o final do arquivo
+    # size = file_xml.tell()
     # print(f"Tamanho do arquivo XML: {size/10**6} Mbytes")
 
     # if size/10**6 > 800: # MB
@@ -278,6 +278,11 @@ if my_file is not None:
     # memory.append(f"8 - {get_memory_usage()}")
 
     file_xml = extract_xml(my_file)
+
+    file_xml.seek(0, 2)  # Move o ponteiro para o final do arquivo
+    size = file_xml.tell()
+    if size / 10**6 > 800:
+        st.write("<p style='color: #7092BE;'>Seems like we are dealing with a big file! Hang in there, it can take about a minute or two.</p>", unsafe_allow_html=True)
 
     # memory.append(f"9 - {get_memory_usage()}")
 
