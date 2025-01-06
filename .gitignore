@@ -3,4 +3,5 @@
 /env
 *.zip
 *.xlsx
+*.csv
 *.ipynb
