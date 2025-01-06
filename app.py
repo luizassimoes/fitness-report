@@ -19,8 +19,8 @@ from openpyxl import Workbook
 from openpyxl.drawing.image import Image
 from openpyxl.styles import PatternFill, Font, Alignment
 
-import psutil
-import time
+# import psutil
+# import time
 # def get_memory_usage():
 #     process = psutil.Process()
 #     memory_info = process.memory_info()
@@ -723,9 +723,9 @@ if my_file is not None:
     # execution_time = end_time - start_time
     # print(f"Tempo total de execução: {execution_time:.2f} segundos")
 
-    para_csv = pd.DataFrame(memory)
-    from datetime import datetime
-    para_csv.to_csv(f'{str(datetime.now()).replace(':', '-').replace(' ','').replace('.', '')}_uso_memoria.csv', header=None, index=None)
+    # para_csv = pd.DataFrame(memory)
+    # from datetime import datetime
+    # para_csv.to_csv(f'{str(datetime.now()).replace(':', '-').replace(' ','').replace('.', '')}_uso_memoria.csv', header=None, index=None)
 
     col1, col2, col3 = st.columns(3)
     with col2:
