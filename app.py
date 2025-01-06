@@ -21,10 +21,10 @@ from openpyxl.styles import PatternFill, Font, Alignment
 
 import psutil
 import time
-def get_memory_usage():
-    process = psutil.Process()
-    memory_info = process.memory_info()
-    return memory_info.rss / (1024 ** 2)  # Convert bytes to MB
+# def get_memory_usage():
+#     process = psutil.Process()
+#     memory_info = process.memory_info()
+#     return memory_info.rss / (1024 ** 2)  # Convert bytes to MB
 # def timing(func):
 #     def wrapper(*args, **kwargs):
 #         start_time = time.time()
@@ -125,9 +125,9 @@ def parse_xml(file, tag, year, attribute=None, values=[]):
     rows = []
     file.seek(0)
     print('1')
-    memory.append(f"3 - {get_memory_usage()}")
+    # memory.append(f"3 - {get_memory_usage()}")
     for event, elem in context:
-        memory.append(f"3.1 - {get_memory_usage()}")
+        # memory.append(f"3.1 - {get_memory_usage()}")
 
         start_date = elem.get('startDate')
         if not start_date:
@@ -138,7 +138,7 @@ def parse_xml(file, tag, year, attribute=None, values=[]):
 
         if elem.tag == tag:
 
-            memory.append(f"3.2 - {get_memory_usage()}")
+            # memory.append(f"3.2 - {get_memory_usage()}")
             # if size/10**6  > 800: # MB
             #     memory.append(f"4 - {get_memory_usage()}")
 
@@ -189,7 +189,7 @@ def parse_xml(file, tag, year, attribute=None, values=[]):
             #     while elem.getprevious() is not None:
             #         del elem.getparent()[0]
 
-    memory.append(f"7 - {get_memory_usage()}")
+    # memory.append(f"7 - {get_memory_usage()}")
     # print(f"Current memory usage: {get_memory_usage():.2f} MB")
     return pd.DataFrame(rows)
 
@@ -275,11 +275,11 @@ selected_year = st.selectbox("Choose a year:", year_range, index=default_index)
 my_file = st.file_uploader("Select a file", type=["zip"], label_visibility="hidden")
 if my_file is not None:
     gc.collect() 
-    memory.append(f"8 - {get_memory_usage()}")
+    # memory.append(f"8 - {get_memory_usage()}")
 
     file_xml = extract_xml(my_file)
 
-    memory.append(f"9 - {get_memory_usage()}")
+    # memory.append(f"9 - {get_memory_usage()}")
 
     st.write("Importing Fitness data...")
     try:
