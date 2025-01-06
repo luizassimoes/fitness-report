@@ -93,7 +93,7 @@ def assign_workout_id(df, interval_tree):
     return df
 
 # @timing
-def parse_large_xml(file, tag, year, attribute=None, values=[]):
+def parse_xml(file, tag, year, attribute=None, values=[]):
     """
         Lê um XML grande de forma eficiente, processando elementos específicos.
         
@@ -283,7 +283,7 @@ if my_file is not None:
 
     st.write("Importing Fitness data...")
     try:
-        df_workout = parse_large_xml(file_xml, tag='Workout', year=selected_year)
+        df_workout = parse_xml(file_xml, tag='Workout', year=selected_year)
         df_workout = df_workout.drop(columns=['durationUnit', 'sourceName', 'sourceVersion'], axis=1)
         df_workout = df_workout[df_workout['startDate'].str.startswith(f"{selected_year}")].reset_index(drop=True)
     except:
@@ -310,7 +310,7 @@ if my_file is not None:
 
         att_list = ['HKQuantityTypeIdentifierHeartRate'] 
         file_xml = extract_xml(my_file)
-        df_heart_rate = parse_large_xml(file_xml, tag='Record', year=selected_year, attribute='type', values=att_list)
+        df_heart_rate = parse_xml(file_xml, tag='Record', year=selected_year, attribute='type', values=att_list)
         df_heart_rate = df_heart_rate.drop(['sourceName', 'sourceVersion', 'device', 'unit', 'creationDate', 'endDate'], axis=1)
         df_heart_rate = df_heart_rate.rename(columns={'value': 'heart_rate'})
         df_heart_rate = df_heart_rate[df_heart_rate['startDate'].str.startswith(f"{selected_year}")].reset_index(drop=True)
@@ -342,7 +342,7 @@ if my_file is not None:
 
     st.write("Importing Activity data...")
     file_xml = extract_xml(my_file)
-    df_activity = parse_large_xml(file_xml, tag='ActivitySummary', year=selected_year)
+    df_activity = parse_xml(file_xml, tag='ActivitySummary', year=selected_year)
     df_activity = df_activity[['dateComponents', 'activeEnergyBurned', 'activeEnergyBurnedGoal', 'appleExerciseTime']]
     df_activity = df_activity[df_activity['dateComponents'].str.startswith(f"{selected_year}")].reset_index(drop=True)
 
