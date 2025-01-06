@@ -111,7 +111,7 @@ def assign_workout_id(df, interval_tree):
     df['id'] = ids
     return df
 
-# @timing
+
 def parse_xml(file, tag, year, attribute=None, values=[]):
     """
     Reads and processes xml file.
@@ -158,7 +158,7 @@ def parse_xml(file, tag, year, attribute=None, values=[]):
                         elif 'Distance' in child.attrib.get('type', ''):
                             km_sports = ['Running', 'Swimming', 'Cycling', 'Walking', 'Hiking']
                             if data['workoutActivityType'].endswith(tuple(km_sports)):
-                                distance_km = child.attrib.get('sum')  # Pega a distância (sum)
+                                distance_km = child.attrib.get('sum')
                                 if data['workoutActivityType'].endswith('Swimming'):
                                     distance_km = float(distance_km)/1000
 
@@ -255,6 +255,7 @@ default_index = year_range.index(default_year)
 selected_year = st.selectbox("Choose a year:", year_range, index=default_index)
 
 my_file = st.file_uploader("Select a file", type=["zip"], label_visibility="hidden")
+
 if my_file is not None:
     gc.collect() 
 
