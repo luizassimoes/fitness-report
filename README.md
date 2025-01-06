@@ -12,7 +12,7 @@ As someone who starts and stops their watch religiously for every workout, I wan
 
 ### Details
 
-All you need to do is extract the health data from your account and submit it to the app, then we do the work! You can see more detailed instructions on the app's page or through [this LinkedIn post](https://www.linkedin.com/in/luizassimoes/).
+All you need to do is extract the health data from your account and submit it to the app, then we do the work! You can see more detailed instructions on the app's page or through [this LinkedIn post]([https://www.linkedin.com/in/luizassimoes/](https://www.linkedin.com/posts/luizassimoes_datavisualization-dataanalysis-python-activity-7282161729596252162-S5ah?utm_source=share&utm_medium=member_desktop)).
 
 
 ### Contact info
