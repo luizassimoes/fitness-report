@@ -1,5 +1,6 @@
 
 import re
+import gc
 import zipfile    
 import textwrap
 import numpy as np
@@ -18,12 +19,12 @@ from openpyxl import Workbook
 from openpyxl.drawing.image import Image
 from openpyxl.styles import PatternFill, Font, Alignment
 
-# import psutil
-# import time
-# def get_memory_usage():
-#     process = psutil.Process()
-#     memory_info = process.memory_info()
-#     return memory_info.rss / (1024 ** 2)  # Convert bytes to MB
+import psutil
+import time
+def get_memory_usage():
+    process = psutil.Process()
+    memory_info = process.memory_info()
+    return memory_info.rss / (1024 ** 2)  # Convert bytes to MB
 # def timing(func):
 #     def wrapper(*args, **kwargs):
 #         start_time = time.time()
@@ -33,6 +34,7 @@ from openpyxl.styles import PatternFill, Font, Alignment
 #         return result
 #     return wrapper
 
+memory = []
 
 def extract_xml(my_file):
     filenames = ['export', 'exportar']
@@ -119,14 +121,12 @@ def parse_large_xml(file, tag, attribute=None, values=[]):
     rows = []
     file.seek(0)
     # context = etree.iterparse(file, events=("end",), tag=tag)
-    # for event, elem in ET.iterparse(file, events=('end',)):
+    memory.append(f"3 - {get_memory_usage()}")
     for event, elem in context:
+        memory.append(f"3.1 - {get_memory_usage()}")
         if elem.tag == tag:
 
-            if size > 900: # MB
-                data = {key: elem.get(key) for key in elem.keys()} 
-            else:
-                data = elem.attrib    
+            memory.append(f"3.2 - {get_memory_usage()}")
 
             if tag == 'Workout':
                 calories, distance_km = (0,) * 2
@@ -159,10 +159,7 @@ def parse_large_xml(file, tag, attribute=None, values=[]):
             elif not attribute:
                 rows.append(data)  # Extrai os atributos como dicionário
             elem.clear()
-            
-            if size > 900: # MB
-                while elem.getprevious() is not None:
-                    del elem.getparent()[0]
+    memory.append(f"7 - {get_memory_usage()}")
     # print(f"Current memory usage: {get_memory_usage():.2f} MB")
     return pd.DataFrame(rows)
 
@@ -248,11 +245,12 @@ selected_year = st.selectbox("Choose a year:", year_range, index=default_index)
 my_file = st.file_uploader("Select a file", type=["zip"], label_visibility="hidden")
 # print('*'*40)
 if my_file is not None:
-    # print(f"Current memory usage before zip: {get_memory_usage():.2f} MB")
+    gc.collect() 
+    memory.append(f"8 - {get_memory_usage()}")
 
     file_xml = extract_xml(my_file)
 
-    # print(f"Current memory usage after zip: {get_memory_usage():.2f} MB")
+    memory.append(f"9 - {get_memory_usage()}")
 
     st.write("Importing Fitness data...")
     try:
@@ -699,6 +697,10 @@ if my_file is not None:
     # end_time = time.time()
     # execution_time = end_time - start_time
     # print(f"Tempo total de execução: {execution_time:.2f} segundos")
+
+    para_csv = pd.DataFrame(memory)
+    from datetime import datetime
+    para_csv.to_csv(f'{str(datetime.now()).replace(':', '-').replace(' ','').replace('.', '')}_uso_memoria.csv', header=None, index=None)
 
     col1, col2, col3 = st.columns(3)
     with col2:
