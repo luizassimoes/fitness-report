@@ -79,10 +79,21 @@ def spaced_str(var):
     return np.nan
 
 
-# Building a tree of intervals from df_workout
 def build_interval_tree(df_workout):
-    # df_workout['startDate'] = pd.to_datetime(df_workout['startDate'])
-    # df_workout['endDate']   = pd.to_datetime(df_workout['endDate'])
+    """
+    Builds an interval tree from a DataFrame containing workout intervals.
+    
+    Args:
+    - df_workout (pd.DataFrame): A DataFrame containing the workout intervals with columns:
+        1) 'id': An identifier for the interval.
+        2) 'startDate' (datetime): The start time of the interval.
+        3) 'endDate' (datetime): The end time of the interval.
+    
+    Returns:
+    - IntervalTree: An interval tree where each interval is expanded by one second on both ends
+                    and is associated with the corresponding 'id' from the DataFrame.
+    """
+    
     tree = IntervalTree()
     for _, row in df_workout.iterrows():
         start = row['startDate'] - pd.Timedelta(seconds=1)
@@ -91,8 +102,21 @@ def build_interval_tree(df_workout):
     return tree
 
 
-# Associating IDs using our tree
 def assign_workout_id(df, interval_tree):
+    """
+    Assigns workout IDs to rows in a DataFrame based on their 'startDate' and a given interval tree.
+    
+    Args:
+    - df (pd.DataFrame): A DataFrame containing at least the column:
+        1) 'startDate' (datetime): The time to check against the intervals.
+    - interval_tree (IntervalTree): An interval tree built with `build_interval_tree`, where each interval
+                                    is associated with a workout ID.
+    
+    Returns:
+    - pd.DataFrame: The input DataFrame with an additional 'id' column, where each value corresponds to
+                    the workout ID of the interval containing the 'startDate', or `None` if no match is found.
+    """
+
     df['startDate'] = pd.to_datetime(df['startDate'])
     ids = []
     for time in df['startDate']:
