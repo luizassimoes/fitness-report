@@ -18,22 +18,6 @@ from openpyxl import Workbook
 from openpyxl.drawing.image import Image
 from openpyxl.styles import PatternFill, Font, Alignment
 
-# import psutil
-# import time
-# def get_memory_usage():
-#     process = psutil.Process()
-#     memory_info = process.memory_info()
-#     return memory_info.rss / (1024 ** 2)  # Convert bytes to MB
-# def timing(func):
-#     def wrapper(*args, **kwargs):
-#         start_time = time.time()
-#         result = func(*args, **kwargs)
-#         end_time = time.time()
-#         print(f"{func.__name__} executado em {end_time - start_time:.2f} segundos")
-#         return result
-#     return wrapper
-
-memory = []
 
 def extract_xml(my_file):
     """
@@ -146,10 +130,7 @@ def parse_xml(file, tag, year, attribute=None, values=[]):
 
     rows = []
     file.seek(0)
-    print('1')
-    # memory.append(f"3 - {get_memory_usage()}")
     for event, elem in context:
-        # memory.append(f"3.1 - {get_memory_usage()}")
 
         start_date = elem.get('startDate')
         if not start_date:
@@ -160,20 +141,6 @@ def parse_xml(file, tag, year, attribute=None, values=[]):
 
         if elem.tag == tag:
 
-            # memory.append(f"3.2 - {get_memory_usage()}")
-            # if size/10**6  > 800: # MB
-            #     memory.append(f"4 - {get_memory_usage()}")
-
-            #     while elem.getprevious() is not None:
-            #         del elem.getparent()[0]
-
-            #     memory.append(f"5 - {get_memory_usage()}")
-                    
-            #     data = {key: elem.get(key) for key in elem.keys()}
-
-            #     memory.append(f"6 - {get_memory_usage()}")
-
-            # else:
             data = elem.attrib    
 
             if tag == 'Workout':
@@ -261,7 +228,6 @@ def insert_table(sheet, table, dark, light):
 
     return sheet
 
-# start_time = time.time()
 
 st.set_page_config(page_title="Fitness Wrapped", page_icon="💪")
 st.title("🏋️ Fitness Wrapped")
@@ -291,7 +257,6 @@ selected_year = st.selectbox("Choose a year:", year_range, index=default_index)
 my_file = st.file_uploader("Select a file", type=["zip"], label_visibility="hidden")
 if my_file is not None:
     gc.collect() 
-    # memory.append(f"8 - {get_memory_usage()}")
 
     file_xml = extract_xml(my_file)
 
@@ -299,8 +264,6 @@ if my_file is not None:
     size = file_xml.tell()
     if size / 10**6 > 800:
         st.write("<p style='color: #7092BE;'>Seems like we are dealing with a big file! Hang in there, it can take about a minute or two.</p>", unsafe_allow_html=True)
-
-    # memory.append(f"9 - {get_memory_usage()}")
 
     st.write("Importing Fitness data...")
     try:
@@ -371,7 +334,6 @@ if my_file is not None:
     df_activity[ac_int_columns] = df_activity[ac_int_columns].apply(lambda row: pd.to_numeric(row, errors='coerce').fillna(0).astype(int))
 
 
-    # st.write("All data imported.")
     st.write("Calculating your results...")
     st.write(" ")
     
@@ -464,6 +426,7 @@ if my_file is not None:
 
     top_exercise_day = pd.Timestamp(top_exercise_day)
     
+
     # Most active day:
     top_active_day_data = df_activity.loc[df_activity['activeEnergyBurned'].idxmax(), ['dateComponents', 'activeEnergyBurned', 'appleExerciseTime']]
     top_active_day = top_active_day_data['dateComponents']
@@ -483,8 +446,6 @@ if my_file is not None:
 
     
     # Showing all of the results:
-
-    
     row_year_1 = f'You exercised for {tsd(exercise_total_time)} minutes this year in {exercise_total_days} different days and burned {tsd(exercise_total_calories)} calories!'
     row_year_2 = f'That is like exercising for {exercise_time_per_day} minutes and burning {exercise_calories_per_day} calories per day every day!'
 
@@ -505,14 +466,11 @@ if my_file is not None:
 
     row_sports_5 = f'Your top 5 sports are:'
     table_sports_1 = top_5_sports_by_time
-
     
     row_heart_1 = f'The sport that makes your heart race is: {sport_highest_avg_heart_rate}!'
     row_heart_2 = f'The average heart rate you get when practicing it is {highest_avg_heart_rate} bpm.'
 
-    
     row_calories_1 = f'But the sport that really makes you burn is {sport_highest_avg_calories} with an average of {highest_avg_calories} calories per session!'
-
     
     row_day_1 = f'The day you exercised the most was {top_exercise_day.month_name()} {top_exercise_day.day}.'
     row_day_2 = f'You worked out for {top_exercise_day_time} minutes and burned {int(top_exercise_day_calories)} calories!'
@@ -521,7 +479,6 @@ if my_file is not None:
     top_exercise_day_training = top_exercise_day_training.reset_index(drop=True)
     table_day_1 = top_exercise_day_training[['Sport', 'Total Minutes', 'Total Calories']]
 
-    
     row_day_4 = f'Now, your most active day was... {top_active_day.month_name()} {top_active_day.day}!'
     row_day_5 = f'Your movement ring reached {tsd(int(top_active_day_calories))} calories and your exercise ring registered {top_active_day_time} minutes!'
 
@@ -533,12 +490,10 @@ if my_file is not None:
         row_day_6 = f"Exercises that day: "
         table_day_2 = top_active_day_training[['Sport', 'Total Minutes', 'Total Calories']]
 
-    
     row_goals_1 = f'You reached your movement goal on {days_energy_goal_check} days this year!'
     row_goals_2 = f'That represents {percent_goal_check_so_far}% of the year!'
 
     row_view_1 = f'Below you can see your results throughout the year.'
-
     
     df_activity_per_month = df_activity.groupby(['month', 'month_name']).agg({'appleExerciseTime': 'sum'}).reset_index()
     df_activity_per_month['hours'] = df_activity_per_month['appleExerciseTime'].apply(lambda value: round(value/60, 1))
@@ -575,7 +530,6 @@ if my_file is not None:
             textcoords='offset points',
             ha='center', fontsize=10, color='black', bbox=dict(facecolor='white', alpha=0.6, edgecolor='none')
         )
-
 
     img_buffer_1 = BytesIO()
     plt.tight_layout()
@@ -626,7 +580,6 @@ if my_file is not None:
 
     sheet.cell(row=3, column=1).value = 'YOUR INFO:'
     sheet.cell(row=3, column=1).font = Font(size=14, name='Bahnschrift Light')
-
 
     dark_orange  = 'F1A983'
     light_orange = 'FDF0E9'
@@ -737,17 +690,8 @@ if my_file is not None:
     excel_title = f"{selected_year}_fitness_report.xlsx"
 
     
-    # wb.save(excel_title)
     output = BytesIO()
     wb.save(output)
-
-    # end_time = time.time()
-    # execution_time = end_time - start_time
-    # print(f"Tempo total de execução: {execution_time:.2f} segundos")
-
-    # para_csv = pd.DataFrame(memory)
-    # from datetime import datetime
-    # para_csv.to_csv(f'{str(datetime.now()).replace(':', '-').replace(' ','').replace('.', '')}_uso_memoria.csv', header=None, index=None)
 
     col1, col2, col3 = st.columns(3)
     with col2:
