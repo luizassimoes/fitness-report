@@ -10,7 +10,6 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import xml.etree.ElementTree as ET
 
-from lxml import etree
 from intervaltree import IntervalTree
 from datetime import date
 

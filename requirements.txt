@@ -3,6 +3,5 @@ pandas
 seaborn
 streamlit
 matplotlib
-lxml
 intervaltree
 openpyxl
