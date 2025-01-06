@@ -6,11 +6,23 @@ Go to [fitness-report.streamlit.app](https://fitness-report.streamlit.app/)!
 
 ### Motivation:
 
-Do you know how we all just love Spotify Wrapped? I always try to think about other apps that could have a “wrap", and it hit me the other day: I always start and stop my watch every time I work out. Why don’t we have a wrap for that?
+Every December, I get excited about Spotify Wrapped — it is like a recap of my year, and it makes me relive the fun moments. That gets me thinking: Why don’t other apps do something similar?
+As someone who starts and stops their watch religiously for every workout, I wanted to see a Wrapped for my fitness journey, but Apple Health did not have it. Then, in true “shower thoughts” fashion, inspiration struck: “I can build that!”
+
 
 ### Details
 
 All you need to do is extract the health data from your account and submit it to the app, then we do the work! You can see more detailed instructions on the app's page or through [this LinkedIn post](https://www.linkedin.com/in/luizassimoes/).
 
+
 ### Contact info
 If you have any questions or if your submission did not work, please send me an [e-mail](mailto:luizassimoes@hotmail.com).
+
+
+### How to use it locally
+
+1. Clone this repository with ```git clone https://github.com/luizassimoes/fitness-report.git```
+2. Create an environment and install the code's dependencies by running ```pip install -r requirements.txt```
+3. Run your app with ```streamlit run app.py```
+
+And there you go! Hope you have as much fun as I did :)
