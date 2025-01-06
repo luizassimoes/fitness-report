@@ -37,11 +37,22 @@ from openpyxl.styles import PatternFill, Font, Alignment
 memory = []
 
 def extract_xml(my_file):
-    filenames = ['export', 'exportar']
+    """
+    Extrai um arquivo XML de um arquivo ZIP que começa com 'export' e não contém '_'.
+    
+    Args:
+        my_file: Caminho para o arquivo ZIP.
+
+    Returns:
+        O arquivo XML extraído.
+    """
+
     with zipfile.ZipFile(my_file) as z:
-        for filename in filenames: 
-            if f'apple_health_export/{filename}.xml' in z.namelist():
-                file_xml = z.open(f'apple_health_export/{filename}.xml')
+        file_preffix = 'apple_health_export/export'
+        file_suffix  = '.xml'
+        for filename in z.namelist():
+            if filename.startswith(file_preffix) and filename.endswith(file_suffix) and '_' not in filename.split('/')[-1]:
+                file_xml = z.open(filename)
                 z.close() 
                 break
     return file_xml
