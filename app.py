@@ -38,13 +38,13 @@ memory = []
 
 def extract_xml(my_file):
     """
-    Extrai um arquivo XML de um arquivo ZIP que começa com 'export' e não contém '_'.
+    Extracts export.xml (or correspondent) file from ZIP file.
     
     Args:
-        my_file: Caminho para o arquivo ZIP.
+    - my_file: path to ZIP file.
 
     Returns:
-        O arquivo XML extraído.
+    - Extracted xml file.
     """
 
     with zipfile.ZipFile(my_file) as z:
@@ -58,25 +58,26 @@ def extract_xml(my_file):
     return file_xml
 
 def spaced_str(var):
-  """Inserts spaces before capitalized letters.
+    """
+    Inserts spaces before capitalized letters.
 
-  Args:
-    word: The word to be modified. Example: JumpRope
+    Args:
+    - word: The word to be modified. Example: JumpRope
 
-  Returns:
-    str: The string with spaces. Example: Jump Rope.
-  """
+    Returns:
+    - str: The string with spaces. Example: Jump Rope.
+    """
 
-  if isinstance(var, str):
-    word = var
-    idx_caps = [m.start() for m in re.finditer(r'[A-Z]', word)]
+    if isinstance(var, str):
+        word = var
+        idx_caps = [m.start() for m in re.finditer(r'[A-Z]', word)]
 
-    # Inserts spaces before captalized letters except for the first one
-    for i, idx in enumerate(idx_caps[1:]):
-      word = word[:idx+i] + ' ' + word[idx+i:]
+        # Inserts spaces before captalized letters except for the first one
+        for i, idx in enumerate(idx_caps[1:]):
+            word = word[:idx+i] + ' ' + word[idx+i:]
 
-    return word
-  return np.nan
+        return word
+    return np.nan
 
 
 # Building a tree of intervals from df_workout
@@ -106,31 +107,18 @@ def assign_workout_id(df, interval_tree):
 # @timing
 def parse_xml(file, tag, year, attribute=None, values=[]):
     """
-        Lê um XML grande de forma eficiente, processando elementos específicos.
-        
-        Args:
-    - file: Caminho para o arquivo XML.
-    - tag: Tag que você deseja extrair (ex.: 'Record').
-    - attribute: Atributo que você deseja filtrar (opcional).
-    - values: Valor do atributo que você deseja filtrar (opcional).
+    Reads and processes xml file.
     
+    Args:
+    - file: xml file.
+    - tag: tag to be extracted (ex.: 'Record').
+    - attribute: attribute to filter (optional).
+    - values: attribute values to filter (optional).
+
     Returns:
-    - DataFrame contendo os dados extraídos.
+    - DataFrame containing extracted data.
     """
 
-    # file_xml.seek(0, 2)  # Move o ponteiro para o final do arquivo
-    # size = file_xml.tell()
-    # print(f"Tamanho do arquivo XML: {size/10**6} Mbytes")
-
-    # if size/10**6 > 800: # MB
-    #     memory.append(f"1 - {get_memory_usage()}")
-    #     context = etree.iterparse(file, events=("end",), tag=tag)
-    #     memory.append(f"2 - {get_memory_usage()}")
-    #     # if get_memory_usage() > 500:
-    #     #     print(f"After context - Current memory usage: {get_memory_usage():.2f} MB")
-    #     if tag == 'Workout':
-    #         st.write("<p style='color: #7092BE;'>Seems like we are dealing with a big file! Hang in there, it can take about a minute or two.</p>", unsafe_allow_html=True)
-    # else:
     context = ET.iterparse(file, events=('end',))
 
     rows = []
@@ -192,16 +180,11 @@ def parse_xml(file, tag, year, attribute=None, values=[]):
 
             if attribute and attribute in data:
                 if data[attribute] in values:
-                    rows.append(data)  # Extrai os atributos como dicionário
+                    rows.append(data)  # Extracts attributes as dictionaries
             elif not attribute:
-                rows.append(data)  # Extrai os atributos como dicionário
+                rows.append(data)  # Extracts attributes as dictionaries
             elem.clear()
-            # if size / 10**6 > 700:
-            #     while elem.getprevious() is not None:
-            #         del elem.getparent()[0]
 
-    # memory.append(f"7 - {get_memory_usage()}")
-    # print(f"Current memory usage: {get_memory_usage():.2f} MB")
     return pd.DataFrame(rows)
 
 
