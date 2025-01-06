@@ -209,7 +209,7 @@ def insert_table(sheet, table, dark, light):
     center_alignment = Alignment(horizontal='center', vertical='center')
     curr_row = sheet.max_row + 1
 
-    # Insere o cabeçalho
+    # Inserts header
     for i_col, col in enumerate(table.columns):
         sheet.cell(row=curr_row, column=i_col+3).value = col
         sheet.cell(row=curr_row, column=i_col+3).fill = PatternFill(start_color=dark, fill_type='solid')
@@ -218,7 +218,7 @@ def insert_table(sheet, table, dark, light):
             sheet.cell(row=curr_row, column=i_col+3).alignment = center_alignment
     sheet.cell(row=curr_row, column=2).fill = PatternFill(start_color=dark, fill_type='solid')
 
-    # Insere os dados
+    # Inserts data
     next_row = curr_row + 1
     for i_row in range(table.shape[0]):
         sheet.cell(row=i_row+next_row, column=2).value = i_row+1 # Insere as posições
@@ -272,7 +272,7 @@ if my_file is not None:
 
     file_xml = extract_xml(my_file)
 
-    file_xml.seek(0, 2)  # Move o ponteiro para o final do arquivo
+    file_xml.seek(0, 2)
     size = file_xml.tell()
     if size / 10**6 > 800:
         st.write("<p style='color: #7092BE;'>Seems like we are dealing with a big file! Hang in there, it can take about a minute or two.</p>", unsafe_allow_html=True)
@@ -317,7 +317,7 @@ if my_file is not None:
 
         df_workout = df_workout.drop(columns=['heart_rate_min', 'heart_rate_max', 'heart_rate_avg'])
 
-        # Processo de união dos dataframes:
+        # Joining dataframes:
         ids = pd.Series(range(1, len(df_workout) + 1))
         df_workout = pd.concat([ids.rename('id'), df_workout], axis=1)
 
@@ -526,13 +526,14 @@ if my_file is not None:
     mean_value = df_activity_per_month['hours'].mean()
     ax1.axhline(mean_value, color='orange', linestyle=':', linewidth=2, label='Average')
     ax1.annotate(
-        f'{mean_value:.2f} h',  # Texto a ser exibido, ajustado para duas casas decimais
-        xy=(0.93, mean_value*1.02),  # Coordenadas (x, y) para posicionar a anotação
-        xycoords=('axes fraction', 'data'),  # Define que x usa fração dos eixos e y os dados
-        fontsize=10,  # Tamanho da fonte
-        color='orange',  # Cor do texto
-        bbox=dict(boxstyle="round,pad=0.3", edgecolor='none', facecolor='white', alpha=0.7)  # Fundo branco com leve transparência
+        f'{mean_value:.2f} h',
+        xy=(0.93, mean_value*1.02),
+        xycoords=('axes fraction', 'data'),
+        fontsize=10,
+        color='orange',
+        bbox=dict(boxstyle="round,pad=0.3", edgecolor='none', facecolor='white', alpha=0.7)
     )
+
 
     lp_time_per_month = sns.lineplot(data=df_activity_per_month, x='month_name', y='hours')
     ax1.set_xlabel('');
@@ -545,10 +546,10 @@ if my_file is not None:
 
     for i, row in df_activity_per_month.iterrows():
         ax1.annotate(
-            text=f"{str(row['hours']).replace('.', ',')} h",  # Texto da anotação
-            xy=(row['month_name'], row['hours']),  # Coordenadas do ponto
-            xytext=(0, 5),  # Deslocamento em relação ao ponto (x, y)
-            textcoords='offset points',  # Usa o deslocamento definido acima
+            text=f"{str(row['hours']).replace('.', ',')} h",
+            xy=(row['month_name'], row['hours']),
+            xytext=(0, 5),
+            textcoords='offset points',
             ha='center', fontsize=10, color='black', bbox=dict(facecolor='white', alpha=0.6, edgecolor='none')
         )
 
@@ -567,8 +568,8 @@ if my_file is not None:
     ax1.yaxis.set_visible(False)
     ax1.set_ylim()
 
-    labels = [textwrap.fill(label, width=11) for label in df_workout_sport_time['workoutActivityType']]  # Limitando a 14 caracteres e quebrando a linha
-    ax1.set_xticks(range(len(labels)))  # Definindo o número de ticks com base no número de rótulos
+    labels = [textwrap.fill(label, width=11) for label in df_workout_sport_time['workoutActivityType']]
+    ax1.set_xticks(range(len(labels)))
     ax1.set_xticklabels(labels, rotation=0, fontdict={'fontsize': 10});  
     ax1.set_xlabel('');
     ax1.set_title('Your Workout Distribution', fontdict={'fontsize': 20})
@@ -585,7 +586,7 @@ if my_file is not None:
     plt.savefig(img_buffer_2, format='png', dpi=100)
 
     
-    # Gerando o relatório:
+    # Generating report:
     wb = Workbook()
     sheet = wb.active
 
@@ -731,7 +732,7 @@ if my_file is not None:
             label="Download my Fitness Report",
             data=output,
             file_name=excel_title,
-            mime='application/xlsx' #"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            mime='application/xlsx'
         )
 else:
     st.info("Please, submit a file to get started.")
